@@ -187,29 +187,68 @@ const TestimonialsSection = () => {
 
         {/* Update Notes Section */}
         <motion.div
-          className="text-center mt-28"
+          className="mt-32 md:mt-40"
           initial={{ opacity: 0, y: 30 }}
           animate={isVisible ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.6, delay: 0.5 }}
         >
-          <h3 className="font-display text-lg md:text-xl text-foreground mb-10 tracking-[0.25em] uppercase">
-            UPDATE NOTES
+          {/* Title - matching site style */}
+          <h3 className="font-display text-[42px] md:text-[56px] lg:text-[70px] text-foreground leading-[0.9] tracking-tight italic uppercase font-bold mb-12 md:mb-16">
+            UPDATE<br />
+            <span className="text-primary">NOTES</span>
           </h3>
-          <div className="grid grid-cols-3 gap-4 md:gap-6 max-w-4xl mx-auto">
-            {[1, 2, 3].map((item, index) => (
+
+          {/* Update Notes Cards Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
+            {[
+              { version: "v1.2.0", title: "Yeni Bulmacalar Eklendi", date: "15 Ocak 2025" },
+              { version: "v1.1.5", title: "Performans İyileştirmeleri", date: "10 Ocak 2025" },
+              { version: "v1.1.0", title: "Yeni Harita Açıldı", date: "5 Ocak 2025" },
+            ].map((note, index) => (
               <motion.div
-                key={item}
-                className="aspect-video bg-secondary/30 rounded-[16px] md:rounded-[20px] border border-border/10 cursor-pointer"
+                key={index}
+                className="bg-[#1a1a1a] rounded-2xl overflow-hidden border border-white/[0.06] cursor-pointer group"
                 initial={{ opacity: 0, y: 30 }}
                 animate={isVisible ? { opacity: 1, y: 0 } : {}}
                 transition={{ duration: 0.5, delay: 0.6 + index * 0.1 }}
-                whileHover={{
-                  scale: 1.05,
-                  borderColor: "hsl(var(--primary) / 0.3)",
-                  backgroundColor: "hsl(var(--secondary) / 0.5)",
-                }}
-                whileTap={{ scale: 0.98 }}
-              />
+                whileHover={{ y: -8, borderColor: "hsl(var(--primary) / 0.3)" }}
+              >
+                {/* Image placeholder - top half */}
+                <div className="aspect-[4/3] bg-gradient-to-br from-secondary/40 to-secondary/20 relative overflow-hidden">
+                  <div 
+                    className="absolute inset-0 opacity-20"
+                    style={{
+                      backgroundImage: "radial-gradient(circle at 30% 70%, hsl(var(--primary) / 0.4) 0%, transparent 50%)",
+                    }}
+                  />
+                  {/* Version badge */}
+                  <div className="absolute top-4 left-4 bg-primary/90 text-background text-xs font-bold px-3 py-1 rounded-full">
+                    {note.version}
+                  </div>
+                </div>
+
+                {/* Content - bottom half */}
+                <div className="p-5 md:p-6">
+                  <p className="text-foreground/40 text-[10px] md:text-xs mb-2">{note.date}</p>
+                  <h4 className="text-foreground font-display text-base md:text-lg italic mb-4 group-hover:text-primary transition-colors duration-300">
+                    {note.title}
+                  </h4>
+                  <motion.button
+                    className="text-primary text-xs md:text-sm font-medium flex items-center gap-2 group/btn"
+                    whileHover={{ x: 4 }}
+                  >
+                    Devamını Oku
+                    <svg 
+                      className="w-4 h-4 transition-transform duration-300 group-hover/btn:translate-x-1" 
+                      fill="none" 
+                      stroke="currentColor" 
+                      viewBox="0 0 24 24"
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
+                  </motion.button>
+                </div>
+              </motion.div>
             ))}
           </div>
         </motion.div>
