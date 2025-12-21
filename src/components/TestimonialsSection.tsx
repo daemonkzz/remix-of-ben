@@ -49,7 +49,7 @@ const TestimonialsSection = () => {
   };
 
   return (
-    <section id="testimonials" className="py-24 md:py-32 lg:py-40 relative overflow-hidden">
+    <section id="testimonials" className="py-16 md:py-24 lg:py-28 relative overflow-hidden">
       <div ref={sectionRef} className="container mx-auto px-6">
         {/* Section Title */}
         <motion.div
@@ -187,14 +187,14 @@ const TestimonialsSection = () => {
 
         {/* Update Notes Section */}
         <motion.div
-          className="mt-24 md:mt-32 lg:mt-40"
+          className="mt-16 md:mt-24 lg:mt-32"
           initial={{ opacity: 0 }}
           animate={isVisible ? { opacity: 1 } : {}}
           transition={{ duration: 0.8, delay: 0.3 }}
         >
           {/* Title - matching site style with enhanced animation */}
           <motion.h3 
-            className="font-display text-[42px] md:text-[56px] lg:text-[70px] text-foreground leading-[0.9] tracking-tight italic uppercase font-bold mb-10 md:mb-14"
+            className="font-display text-[32px] sm:text-[42px] md:text-[56px] lg:text-[70px] text-foreground leading-[0.9] tracking-tight italic uppercase font-bold mb-6 md:mb-10"
             initial={{ opacity: 0, x: -50 }}
             animate={isVisible ? { opacity: 1, x: 0 } : {}}
             transition={{ duration: 0.7, delay: 0.4, ease: "easeOut" }}
@@ -215,8 +215,8 @@ const TestimonialsSection = () => {
             </motion.span>
           </motion.h3>
 
-          {/* Update Notes Cards Grid - Mobile optimized with 2 columns */}
-          <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
+          {/* Mobile: Horizontal scroll showing one card at a time, Desktop: Grid */}
+          <div className="flex gap-4 overflow-x-auto pb-4 snap-x snap-mandatory md:grid md:grid-cols-3 md:gap-6 md:overflow-visible md:pb-0 scrollbar-hide">
             {[
               { version: "v1.2.0", title: "Yeni Bulmacalar Eklendi", date: "15 Ocak 2025" },
               { version: "v1.1.5", title: "Performans İyileştirmeleri", date: "10 Ocak 2025" },
@@ -224,7 +224,7 @@ const TestimonialsSection = () => {
             ].map((note, index) => (
               <motion.div
                 key={index}
-                className="bg-[#1a1a1a] rounded-xl sm:rounded-2xl overflow-hidden border border-white/[0.06] cursor-pointer group relative"
+                className="flex-shrink-0 w-[280px] sm:w-[300px] md:w-auto snap-center bg-[#1a1a1a] rounded-xl md:rounded-2xl overflow-hidden border border-white/[0.06] cursor-pointer group relative"
                 initial={{ opacity: 0, y: 40, scale: 0.95 }}
                 animate={isVisible ? { opacity: 1, y: 0, scale: 1 } : {}}
                 transition={{ 
@@ -246,8 +246,8 @@ const TestimonialsSection = () => {
                   }}
                 />
                 
-                {/* Image placeholder - top half */}
-                <div className="aspect-[4/3] sm:aspect-[4/3] bg-gradient-to-br from-secondary/50 to-secondary/20 relative overflow-hidden">
+                {/* Image placeholder */}
+                <div className="aspect-[16/10] md:aspect-[4/3] bg-gradient-to-br from-secondary/50 to-secondary/20 relative overflow-hidden">
                   {/* Animated background pattern */}
                   <motion.div 
                     className="absolute inset-0"
@@ -272,27 +272,27 @@ const TestimonialsSection = () => {
                   
                   {/* Version badge */}
                   <motion.div 
-                    className="absolute top-2 left-2 sm:top-3 sm:left-3 bg-primary/90 text-background text-[9px] sm:text-xs font-bold px-2 py-0.5 sm:px-3 sm:py-1 rounded-full"
+                    className="absolute top-3 left-3 bg-primary/90 text-background text-[10px] md:text-xs font-bold px-2.5 py-1 rounded-full"
                     whileHover={{ scale: 1.1 }}
                   >
                     {note.version}
                   </motion.div>
                 </div>
 
-                {/* Content - bottom half */}
-                <div className="p-3 sm:p-4 md:p-5">
-                  <p className="text-foreground/40 text-[9px] sm:text-[10px] md:text-xs mb-1 sm:mb-2">{note.date}</p>
-                  <h4 className="text-foreground font-display text-xs sm:text-sm md:text-base lg:text-lg italic mb-2 sm:mb-3 md:mb-4 group-hover:text-primary transition-colors duration-300 line-clamp-2">
+                {/* Content */}
+                <div className="p-4 md:p-5">
+                  <p className="text-foreground/40 text-[10px] md:text-xs mb-1.5">{note.date}</p>
+                  <h4 className="text-foreground font-display text-sm md:text-base lg:text-lg italic mb-3 group-hover:text-primary transition-colors duration-300">
                     {note.title}
                   </h4>
                   <motion.button
-                    className="text-primary text-[10px] sm:text-xs md:text-sm font-medium flex items-center gap-1 sm:gap-2 group/btn"
+                    className="text-primary text-xs md:text-sm font-medium flex items-center gap-2 group/btn"
                     whileHover={{ x: 4 }}
                     whileTap={{ scale: 0.95 }}
                   >
                     Devamını Oku
                     <motion.svg 
-                      className="w-3 h-3 sm:w-4 sm:h-4" 
+                      className="w-4 h-4" 
                       fill="none" 
                       stroke="currentColor" 
                       viewBox="0 0 24 24"
@@ -304,6 +304,13 @@ const TestimonialsSection = () => {
                   </motion.button>
                 </div>
               </motion.div>
+            ))}
+          </div>
+          
+          {/* Mobile scroll indicator dots */}
+          <div className="flex justify-center gap-2 mt-4 md:hidden">
+            {[0, 1, 2].map((i) => (
+              <div key={i} className="w-1.5 h-1.5 rounded-full bg-foreground/20" />
             ))}
           </div>
         </motion.div>
