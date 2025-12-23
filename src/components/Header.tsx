@@ -70,7 +70,7 @@ const Header = () => {
           <div className="hidden lg:flex items-center justify-center flex-1">
             <div className="flex items-center gap-8">
               {/* Left Nav Links */}
-              {["Quests", "Cost"].map((link, index) => (
+              {["Kurallar", "Güncellemeler"].map((link, index) => (
                 <motion.a 
                   key={link}
                   href={`#${link.toLowerCase()}`} 
@@ -121,7 +121,7 @@ const Header = () => {
               </motion.div>
 
               {/* Right Nav Links */}
-              {["Testimonials", "FAQ"].map((link, index) => (
+              {["Hikaye", "Harita"].map((link, index) => (
                 <motion.a 
                   key={link}
                   href={`#${link.toLowerCase()}`} 
@@ -172,7 +172,7 @@ const Header = () => {
               exit={{ opacity: 0, height: 0 }}
               transition={{ duration: 0.3 }}
             >
-              {["Quests", "Cost", "Testimonials", "FAQ"].map((link, index) => (
+              {["Kurallar", "Güncellemeler", "Hikaye", "Harita"].map((link, index) => (
                 <motion.a 
                   key={link}
                   href={`#${link.toLowerCase()}`} 
