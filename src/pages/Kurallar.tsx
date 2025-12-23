@@ -8,11 +8,14 @@ import { Input } from "@/components/ui/input";
 interface Rule {
   id: string;
   title: string;
+  description: string;
+  lastUpdate?: string;
 }
 
 interface SubCategory {
   id: string;
   title: string;
+  description?: string;
   rules: Rule[];
 }
 
@@ -30,20 +33,57 @@ const rulesData: MainCategory[] = [
       {
         id: "1.1",
         title: "Davranış Kuralları",
+        description: "Bu bölümdeki kurallar aşağıda listelenmiştir.",
         rules: [
-          { id: "1.1.1", title: "Tüm oyunculara saygılı davranılmalıdır." },
-          { id: "1.1.2", title: "Küfür, hakaret ve aşağılayıcı söylemler yasaktır." },
-          { id: "1.1.3", title: "Spam yapmak ve gereksiz mesajlar göndermek yasaktır." },
-          { id: "1.1.4", title: "Oyun içi ve dışı her türlü taciz yasaktır." },
+          { 
+            id: "1.1.1", 
+            title: "Saygılı Davranış", 
+            description: "Tüm oyunculara saygılı davranılmalıdır. Herhangi bir oyuncuya karşı ayrımcılık, nefret söylemi veya kışkırtıcı davranışlarda bulunmak kesinlikle yasaktır.",
+            lastUpdate: "10.12.2025"
+          },
+          { 
+            id: "1.1.2", 
+            title: "Küfür ve Hakaret", 
+            description: "Küfür, hakaret ve aşağılayıcı söylemler yasaktır. Bu kural hem oyun içi hem de Discord sunucusunda geçerlidir.",
+            lastUpdate: "10.12.2025"
+          },
+          { 
+            id: "1.1.3", 
+            title: "Spam Yasağı", 
+            description: "Spam yapmak ve gereksiz mesajlar göndermek yasaktır. Tekrarlayan mesajlar, flood ve benzeri davranışlar cezalandırılır.",
+            lastUpdate: "10.12.2025"
+          },
+          { 
+            id: "1.1.4", 
+            title: "Taciz Yasağı", 
+            description: "Oyun içi ve dışı her türlü taciz yasaktır. Bu durum tespit edildiğinde kalıcı ban ile sonuçlanabilir.",
+            lastUpdate: "10.12.2025"
+          },
         ],
       },
       {
         id: "1.2",
         title: "Yetki Kuralları",
+        description: "Bu bölümdeki kurallar aşağıda listelenmiştir.",
         rules: [
-          { id: "1.2.1", title: "Yetkililerin kararlarına saygı gösterilmelidir." },
-          { id: "1.2.2", title: "Yetkililerle tartışmak yerine ticket açılmalıdır." },
-          { id: "1.2.3", title: "Yetkili kararlarına itiraz Discord üzerinden yapılır." },
+          { 
+            id: "1.2.1", 
+            title: "Yetkililerin Kararları", 
+            description: "Yetkililerin kararlarına saygı gösterilmelidir. Yetkililer sunucunun düzenini sağlamak için çalışmaktadır ve kararları nihaidir.",
+            lastUpdate: "10.12.2025"
+          },
+          { 
+            id: "1.2.2", 
+            title: "İtiraz Yöntemi", 
+            description: "Yetkililerle tartışmak yerine ticket açılmalıdır. Oyun içinde yetkililere karşı çıkmak veya kararlarını sorgulamak yasaktır.",
+            lastUpdate: "10.12.2025"
+          },
+          { 
+            id: "1.2.3", 
+            title: "Karar İtirazları", 
+            description: "Yetkili kararlarına itiraz Discord üzerinden yapılır. İtirazlarınızı kanıtlarla destekleyerek ticket sistemi üzerinden iletebilirsiniz.",
+            lastUpdate: "10.12.2025"
+          },
         ],
       },
     ],
@@ -55,32 +95,100 @@ const rulesData: MainCategory[] = [
       {
         id: "2.1",
         title: "Temel RP Kuralları",
+        description: "Bu bölümdeki kurallar aşağıda listelenmiştir.",
         rules: [
-          { id: "2.1.1", title: "Her zaman karakterinizde kalmalısınız (IC)." },
-          { id: "2.1.2", title: "OOC (Out of Character) konuşmalar için belirlenen kanalları kullanın." },
-          { id: "2.1.3", title: "Powergaming yasaktır - karşı tarafa tepki verme şansı tanıyın." },
-          { id: "2.1.4", title: "Metagaming yasaktır - IC bilmediğiniz bilgileri kullanmayın." },
+          { 
+            id: "2.1.1", 
+            title: "Karakter Kalıcılığı", 
+            description: "Her zaman karakterinizde kalmalısınız (IC). Oyun içinde OOC konuşmalar minimum düzeyde tutulmalı ve gerçekten gerekli olmadıkça yapılmamalıdır.",
+            lastUpdate: "10.12.2025"
+          },
+          { 
+            id: "2.1.2", 
+            title: "OOC İletişim", 
+            description: "OOC (Out of Character) konuşmalar için belirlenen kanalları kullanın. Oyun içinde OOC bilgi paylaşımı yasaktır.",
+            lastUpdate: "10.12.2025"
+          },
+          { 
+            id: "2.1.3", 
+            title: "Powergaming Yasağı", 
+            description: "Powergaming yasaktır - karşı tarafa tepki verme şansı tanıyın. Diğer oyuncuların eylemlerini zorla kontrol etmeye çalışmak veya gerçekçi olmayan yetenekler sergilemek yasaktır.",
+            lastUpdate: "10.12.2025"
+          },
+          { 
+            id: "2.1.4", 
+            title: "Metagaming Yasağı", 
+            description: "Metagaming yasaktır - IC bilmediğiniz bilgileri kullanmayın. Discord, stream veya diğer OOC kaynaklardan edinilen bilgileri oyun içinde kullanmak yasaktır.",
+            lastUpdate: "10.12.2025"
+          },
         ],
       },
       {
         id: "2.2",
         title: "Saldırı Kuralları",
+        description: "Bu bölümdeki kurallar aşağıda listelenmiştir.",
         rules: [
-          { id: "2.2.1", title: "Random Deathmatch (RDM) kesinlikle yasaktır." },
-          { id: "2.2.2", title: "Vehicle Deathmatch (VDM) kesinlikle yasaktır." },
-          { id: "2.2.3", title: "Combat logging (savaş sırasında çıkış) yasaktır." },
-          { id: "2.2.4", title: "Revenge Kill (intikam öldürmesi) yasaktır." },
+          { 
+            id: "2.2.1", 
+            title: "RDM Yasağı", 
+            description: "Random Deathmatch (RDM) kesinlikle yasaktır. Herhangi bir roleplay sebebi olmadan diğer oyuncuları öldürmek veya yaralamak yasaktır.",
+            lastUpdate: "10.12.2025"
+          },
+          { 
+            id: "2.2.2", 
+            title: "VDM Yasağı", 
+            description: "Vehicle Deathmatch (VDM) kesinlikle yasaktır. Araçla kasıtlı olarak diğer oyunculara çarpmak veya onları öldürmeye çalışmak yasaktır.",
+            lastUpdate: "10.12.2025"
+          },
+          { 
+            id: "2.2.3", 
+            title: "Combat Logging Yasağı", 
+            description: "Combat logging (savaş sırasında çıkış) yasaktır. Aktif bir roleplay veya savaş sırasında oyundan çıkmak yasaktır ve cezalandırılır.",
+            lastUpdate: "10.12.2025"
+          },
+          { 
+            id: "2.2.4", 
+            title: "Revenge Kill Yasağı", 
+            description: "Revenge Kill (intikam öldürmesi) yasaktır. Öldükten sonra sizi öldüren kişiyi bulup öldürmeye çalışmak NLR kuralını ihlal eder.",
+            lastUpdate: "10.12.2025"
+          },
         ],
       },
       {
         id: "2.3",
         title: "Karakter Kuralları",
+        description: "Bu bölümdeki kurallar aşağıda listelenmiştir.",
         rules: [
-          { id: "2.3.1", title: "Karakteriniz gerçekçi bir geçmişe sahip olmalıdır." },
-          { id: "2.3.2", title: "Ünlü kişilerin isimlerini veya karakterlerini kullanamazsınız." },
-          { id: "2.3.3", title: "Karakterinizin yaşı 18'den büyük olmalıdır." },
-          { id: "2.3.4", title: "Fear RP kuralına uymalısınız - karakteriniz ölümden korkmalı." },
-          { id: "2.3.5", title: "New Life Rule (NLR) - Öldükten sonra önceki olayları hatırlayamazsınız." },
+          { 
+            id: "2.3.1", 
+            title: "Gerçekçi Geçmiş", 
+            description: "Karakteriniz gerçekçi bir geçmişe sahip olmalıdır. Süper güçler, aşırı zenginlik veya gerçekçi olmayan yetenekler içeren hikayeler kabul edilmez.",
+            lastUpdate: "10.12.2025"
+          },
+          { 
+            id: "2.3.2", 
+            title: "İsim Kuralları", 
+            description: "Ünlü kişilerin isimlerini veya karakterlerini kullanamazsınız. Gerçek hayattaki ünlüler, film karakterleri veya diğer oyunlardan karakterler yasaktır.",
+            lastUpdate: "10.12.2025"
+          },
+          { 
+            id: "2.3.3", 
+            title: "Yaş Sınırı", 
+            description: "Karakterinizin yaşı 18'den büyük olmalıdır. Çocuk karakter roleplay'i kesinlikle yasaktır.",
+            lastUpdate: "10.12.2025"
+          },
+          { 
+            id: "2.3.4", 
+            title: "Fear RP Kuralı", 
+            description: "Fear RP kuralına uymalısınız - karakteriniz ölümden korkmalı. Silah doğrultulmuşken kahramanlık yapmaya çalışmak yasaktır.",
+            lastUpdate: "10.12.2025"
+          },
+          { 
+            id: "2.3.5", 
+            title: "New Life Rule (NLR)", 
+            description: "Öldükten sonra önceki olayları hatırlayamazsınız. Ölümünüze yol açan olayları ve ilgili kişileri unutmanız gerekmektedir.",
+            lastUpdate: "10.12.2025"
+          },
         ],
       },
     ],
@@ -92,31 +200,94 @@ const rulesData: MainCategory[] = [
       {
         id: "3.1",
         title: "Soygun Kuralları",
+        description: "Bu bölümdeki kurallar aşağıda listelenmiştir.",
         rules: [
-          { id: "3.1.1", title: "Banka soygunu için minimum 4 polis online olmalıdır." },
-          { id: "3.1.2", title: "Mücevherat soygunu için minimum 3 polis online olmalıdır." },
-          { id: "3.1.3", title: "Market soygunu için minimum 2 polis online olmalıdır." },
-          { id: "3.1.4", title: "Ardışık soygunlar arasında en az 30 dakika beklenmelidir." },
+          { 
+            id: "3.1.1", 
+            title: "Banka Soygunu", 
+            description: "Banka soygunu için minimum 4 polis online olmalıdır. Soygun planı önceden hazırlanmalı ve gerçekçi olmalıdır.",
+            lastUpdate: "10.12.2025"
+          },
+          { 
+            id: "3.1.2", 
+            title: "Mücevherat Soygunu", 
+            description: "Mücevherat soygunu için minimum 3 polis online olmalıdır. Ekipman ve araç hazırlığı yapılmalıdır.",
+            lastUpdate: "10.12.2025"
+          },
+          { 
+            id: "3.1.3", 
+            title: "Market Soygunu", 
+            description: "Market soygunu için minimum 2 polis online olmalıdır. Küçük çaplı soygunlar için bile RP gereklidir.",
+            lastUpdate: "10.12.2025"
+          },
+          { 
+            id: "3.1.4", 
+            title: "Soygun Aralığı", 
+            description: "Ardışık soygunlar arasında en az 30 dakika beklenmelidir. Bu süre soygun bitiminden itibaren hesaplanır.",
+            lastUpdate: "10.12.2025"
+          },
         ],
       },
       {
         id: "3.2",
         title: "Rehine Kuralları",
+        description: "Bu bölümdeki kurallar aşağıda listelenmiştir.",
         rules: [
-          { id: "3.2.1", title: "Rehine alma süresi maksimum 30 dakikadır." },
-          { id: "3.2.2", title: "Rehine olarak kendi çete üyelerinizi kullanamazsınız." },
-          { id: "3.2.3", title: "Rehinenin gerçekçi talepleri karşılanmalıdır." },
+          { 
+            id: "3.2.1", 
+            title: "Rehine Süresi", 
+            description: "Rehine alma süresi maksimum 30 dakikadır. Bu süre aşıldığında rehine serbest bırakılmalıdır.",
+            lastUpdate: "10.12.2025"
+          },
+          { 
+            id: "3.2.2", 
+            title: "Çete Üyesi Yasağı", 
+            description: "Rehine olarak kendi çete üyelerinizi kullanamazsınız. Gerçek ve gönüllü olmayan rehineler kullanılmalıdır.",
+            lastUpdate: "10.12.2025"
+          },
+          { 
+            id: "3.2.3", 
+            title: "Rehine Hakları", 
+            description: "Rehinenin gerçekçi talepleri karşılanmalıdır. Yemek, su ve temel ihtiyaçlar sağlanmalıdır.",
+            lastUpdate: "10.12.2025"
+          },
         ],
       },
       {
         id: "3.3",
         title: "Çete Kuralları",
+        description: "Bu bölümdeki kurallar aşağıda listelenmiştir.",
         rules: [
-          { id: "3.3.1", title: "Cop baiting (polis kışkırtma) yasaktır." },
-          { id: "3.3.2", title: "Güvenli bölgelerde suç işlenemez." },
-          { id: "3.3.3", title: "Gang savaşları için yetki alınmalıdır." },
-          { id: "3.3.4", title: "Silah kullanımı öncesi RP yapılmalıdır." },
-          { id: "3.3.5", title: "Çete üye sayısı maksimum 15 kişidir." },
+          { 
+            id: "3.3.1", 
+            title: "Cop Baiting Yasağı", 
+            description: "Cop baiting (polis kışkırtma) yasaktır. Kasıtlı olarak polisi kışkırtmak veya takip ettirmek yasaktır.",
+            lastUpdate: "10.12.2025"
+          },
+          { 
+            id: "3.3.2", 
+            title: "Güvenli Bölgeler", 
+            description: "Güvenli bölgelerde suç işlenemez. Hastane, karakol ve diğer belirlenen alanlar güvenli bölgedir.",
+            lastUpdate: "10.12.2025"
+          },
+          { 
+            id: "3.3.3", 
+            title: "Gang Savaşları", 
+            description: "Gang savaşları için yetki alınmalıdır. Büyük çaplı çatışmalar önceden yetkililere bildirilmelidir.",
+            lastUpdate: "10.12.2025"
+          },
+          { 
+            id: "3.3.4", 
+            title: "Silah Kullanımı", 
+            description: "Silah kullanımı öncesi RP yapılmalıdır. Ateş açmadan önce uygun roleplay senaryosu oluşturulmalıdır.",
+            lastUpdate: "10.12.2025"
+          },
+          { 
+            id: "3.3.5", 
+            title: "Üye Limiti", 
+            description: "Çete üye sayısı maksimum 15 kişidir. Bu sayının üzerindeki üyeler kabul edilmez.",
+            lastUpdate: "10.12.2025"
+          },
         ],
       },
     ],
@@ -128,21 +299,63 @@ const rulesData: MainCategory[] = [
       {
         id: "4.1",
         title: "Sürüş Kuralları",
+        description: "Bu bölümdeki kurallar aşağıda listelenmiştir.",
         rules: [
-          { id: "4.1.1", title: "Trafik kurallarına uyulmalıdır (acil durumlar hariç)." },
-          { id: "4.1.2", title: "Araç parkı belirlenen yerlere yapılmalıdır." },
-          { id: "4.1.3", title: "Araçları kasıtlı olarak kaza yaptırmak yasaktır." },
-          { id: "4.1.4", title: "Kaldırımda araç kullanmak yasaktır." },
+          { 
+            id: "4.1.1", 
+            title: "Trafik Kuralları", 
+            description: "Trafik kurallarına uyulmalıdır (acil durumlar hariç). Kırmızı ışıkta durmak, hız limitlerine uymak zorunludur.",
+            lastUpdate: "10.12.2025"
+          },
+          { 
+            id: "4.1.2", 
+            title: "Araç Parkı", 
+            description: "Araç parkı belirlenen yerlere yapılmalıdır. Yol ortasında veya uygunsuz yerlerde araç bırakmak yasaktır.",
+            lastUpdate: "10.12.2025"
+          },
+          { 
+            id: "4.1.3", 
+            title: "Kasıtlı Kaza", 
+            description: "Araçları kasıtlı olarak kaza yaptırmak yasaktır. Bilerek araç hasarı oluşturmak cezalandırılır.",
+            lastUpdate: "10.12.2025"
+          },
+          { 
+            id: "4.1.4", 
+            title: "Kaldırım Yasağı", 
+            description: "Kaldırımda araç kullanmak yasaktır. Yaya alanlarında araç kullanmak VDM kapsamında değerlendirilir.",
+            lastUpdate: "10.12.2025"
+          },
         ],
       },
       {
         id: "4.2",
         title: "Araç Kullanım Kuralları",
+        description: "Bu bölümdeki kurallar aşağıda listelenmiştir.",
         rules: [
-          { id: "4.2.1", title: "Uçan araçlar için özel izin gereklidir." },
-          { id: "4.2.2", title: "Araç modifikasyonları karakter bütçesine uygun olmalıdır." },
-          { id: "4.2.3", title: "Çalıntı araçlar 2 saat içinde terk edilmelidir." },
-          { id: "4.2.4", title: "Süper araçlar sadece whitelisted oyunculara açıktır." },
+          { 
+            id: "4.2.1", 
+            title: "Uçan Araçlar", 
+            description: "Uçan araçlar için özel izin gereklidir. Helikopter ve uçak kullanımı için whitelist gerekir.",
+            lastUpdate: "10.12.2025"
+          },
+          { 
+            id: "4.2.2", 
+            title: "Araç Modifikasyonu", 
+            description: "Araç modifikasyonları karakter bütçesine uygun olmalıdır. Aşırı pahalı modifikasyonlar için gelir kanıtı gerekebilir.",
+            lastUpdate: "10.12.2025"
+          },
+          { 
+            id: "4.2.3", 
+            title: "Çalıntı Araçlar", 
+            description: "Çalıntı araçlar 2 saat içinde terk edilmelidir. Bu süre sonunda araç spawn noktasına döner.",
+            lastUpdate: "10.12.2025"
+          },
+          { 
+            id: "4.2.4", 
+            title: "Süper Araçlar", 
+            description: "Süper araçlar sadece whitelisted oyunculara açıktır. Bu araçlar için başvuru yapılması gerekmektedir.",
+            lastUpdate: "10.12.2025"
+          },
         ],
       },
     ],
@@ -154,35 +367,118 @@ const rulesData: MainCategory[] = [
       {
         id: "5.1",
         title: "İletişim Kuralları",
+        description: "Bu bölümdeki kurallar aşağıda listelenmiştir.",
         rules: [
-          { id: "5.1.1", title: "Oyun içi iletişim için mikrofon kullanılmalıdır." },
-          { id: "5.1.2", title: "Push-to-talk önerilir, açık mikrofon kullanılmamalıdır." },
-          { id: "5.1.3", title: "Telsiz mesafesi kurallarına uyulmalıdır." },
-          { id: "5.1.4", title: "Discord voice chat sadece OOC iletişim içindir." },
-          { id: "5.1.5", title: "Karakterler arası telefon görüşmeleri IC olarak yapılmalıdır." },
+          { 
+            id: "5.1.1", 
+            title: "Mikrofon Kullanımı", 
+            description: "Oyun içi iletişim için mikrofon kullanılmalıdır. Text RP sadece belirli durumlarda kabul edilir.",
+            lastUpdate: "10.12.2025"
+          },
+          { 
+            id: "5.1.2", 
+            title: "Push-to-Talk", 
+            description: "Push-to-talk önerilir, açık mikrofon kullanılmamalıdır. Arka plan sesleri diğer oyuncuları rahatsız edebilir.",
+            lastUpdate: "10.12.2025"
+          },
+          { 
+            id: "5.1.3", 
+            title: "Telsiz Mesafesi", 
+            description: "Telsiz mesafesi kurallarına uyulmalıdır. Telsiz menzili dışında iletişim kurulamaz.",
+            lastUpdate: "10.12.2025"
+          },
+          { 
+            id: "5.1.4", 
+            title: "Discord Voice", 
+            description: "Discord voice chat sadece OOC iletişim içindir. Oyun içi bilgi paylaşımı için kullanılamaz.",
+            lastUpdate: "10.12.2025"
+          },
+          { 
+            id: "5.1.5", 
+            title: "Telefon Görüşmeleri", 
+            description: "Karakterler arası telefon görüşmeleri IC olarak yapılmalıdır. Gerçekçi diyaloglar kullanılmalıdır.",
+            lastUpdate: "10.12.2025"
+          },
         ],
       },
       {
         id: "5.2",
         title: "Ekonomi Kuralları",
+        description: "Bu bölümdeki kurallar aşağıda listelenmiştir.",
         rules: [
-          { id: "5.2.1", title: "Para transferleri kayıt altına alınır." },
-          { id: "5.2.2", title: "Gerçek para ile oyun içi para alışverişi yasaktır." },
-          { id: "5.2.3", title: "Ekonomiyi bozmaya yönelik eylemler yasaktır." },
-          { id: "5.2.4", title: "İş yeri sahipleri fiyatları makul tutmalıdır." },
-          { id: "5.2.5", title: "Çoklu hesap ile ekonomi manipülasyonu yasaktır." },
+          { 
+            id: "5.2.1", 
+            title: "Para Transferleri", 
+            description: "Para transferleri kayıt altına alınır. Şüpheli transferler incelemeye alınabilir.",
+            lastUpdate: "10.12.2025"
+          },
+          { 
+            id: "5.2.2", 
+            title: "Gerçek Para Yasağı", 
+            description: "Gerçek para ile oyun içi para alışverişi yasaktır. Bu durum kalıcı ban ile sonuçlanır.",
+            lastUpdate: "10.12.2025"
+          },
+          { 
+            id: "5.2.3", 
+            title: "Ekonomi Manipülasyonu", 
+            description: "Ekonomiyi bozmaya yönelik eylemler yasaktır. Bug abuse veya exploit kullanımı cezalandırılır.",
+            lastUpdate: "10.12.2025"
+          },
+          { 
+            id: "5.2.4", 
+            title: "İş Yeri Fiyatları", 
+            description: "İş yeri sahipleri fiyatları makul tutmalıdır. Aşırı fiyatlandırma yetkililer tarafından düzeltilebilir.",
+            lastUpdate: "10.12.2025"
+          },
+          { 
+            id: "5.2.5", 
+            title: "Çoklu Hesap", 
+            description: "Çoklu hesap ile ekonomi manipülasyonu yasaktır. Alt hesaplar tespit edildiğinde tüm hesaplar banlanır.",
+            lastUpdate: "10.12.2025"
+          },
         ],
       },
       {
         id: "5.3",
         title: "Ceza Sistemi",
+        description: "Bu bölümdeki kurallar aşağıda listelenmiştir.",
         rules: [
-          { id: "5.3.1", title: "İlk ihlal: Sözlü uyarı" },
-          { id: "5.3.2", title: "İkinci ihlal: Yazılı uyarı ve 24 saat ban" },
-          { id: "5.3.3", title: "Üçüncü ihlal: 7 gün ban" },
-          { id: "5.3.4", title: "Dördüncü ihlal: Kalıcı ban" },
-          { id: "5.3.5", title: "Ağır ihlaller (RDM, VDM, hack) doğrudan kalıcı ban ile sonuçlanabilir." },
-          { id: "5.3.6", title: "Ban itirazları Discord üzerinden yapılabilir." },
+          { 
+            id: "5.3.1", 
+            title: "İlk İhlal", 
+            description: "İlk ihlal: Sözlü uyarı verilir. Bu uyarı kayıt altına alınır ve tekrarı halinde daha ağır yaptırımlar uygulanır.",
+            lastUpdate: "10.12.2025"
+          },
+          { 
+            id: "5.3.2", 
+            title: "İkinci İhlal", 
+            description: "İkinci ihlal: Yazılı uyarı ve 24 saat ban uygulanır. Ban süresi boyunca sunucuya erişim engellenir.",
+            lastUpdate: "10.12.2025"
+          },
+          { 
+            id: "5.3.3", 
+            title: "Üçüncü İhlal", 
+            description: "Üçüncü ihlal: 7 gün ban uygulanır. Bu süre zarfında itiraz hakkınız bulunmaktadır.",
+            lastUpdate: "10.12.2025"
+          },
+          { 
+            id: "5.3.4", 
+            title: "Dördüncü İhlal", 
+            description: "Dördüncü ihlal: Kalıcı ban uygulanır. Kalıcı bandan sonra sadece özel durumlarda ban kaldırılabilir.",
+            lastUpdate: "10.12.2025"
+          },
+          { 
+            id: "5.3.5", 
+            title: "Ağır İhlaller", 
+            description: "Ağır ihlaller (RDM, VDM, hack) doğrudan kalıcı ban ile sonuçlanabilir. Bu karara itiraz hakkı sınırlıdır.",
+            lastUpdate: "10.12.2025"
+          },
+          { 
+            id: "5.3.6", 
+            title: "Ban İtirazları", 
+            description: "Ban itirazları Discord üzerinden yapılabilir. İtiraz süresi ban tarihinden itibaren 7 gündür.",
+            lastUpdate: "10.12.2025"
+          },
         ],
       },
     ],
@@ -194,7 +490,7 @@ const Kurallar = () => {
   const [expandedCategories, setExpandedCategories] = useState<string[]>(["1"]);
   const [expandedSubCategories, setExpandedSubCategories] = useState<string[]>(["1.1"]);
   const [activeRule, setActiveRule] = useState<string | null>(null);
-  const sectionRefs = useRef<{ [key: string]: HTMLLIElement | null }>({});
+  const sectionRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
 
   const toggleCategory = (id: string) => {
     setExpandedCategories((prev) =>
@@ -231,6 +527,7 @@ const Kurallar = () => {
             ...subCat,
             rules: subCat.rules.filter((rule) =>
               rule.title.toLowerCase().includes(query) ||
+              rule.description.toLowerCase().includes(query) ||
               rule.id.toLowerCase().includes(query)
             ),
           }))
@@ -391,7 +688,7 @@ const Kurallar = () => {
                                     <span className="truncate">{subCat.title}</span>
                                   </motion.button>
 
-                                  {/* Rules */}
+                                  {/* Rules in Sidebar */}
                                   <AnimatePresence>
                                     {expandedSubCategories.includes(subCat.id) && (
                                       <motion.div
@@ -414,6 +711,7 @@ const Kurallar = () => {
                                               whileHover={{ x: 2 }}
                                             >
                                               <span className="text-primary/40 font-mono flex-shrink-0">{rule.id}</span>
+                                              <span className="truncate">{rule.title}</span>
                                             </motion.button>
                                           ))}
                                         </div>
@@ -452,11 +750,11 @@ const Kurallar = () => {
                 filteredData.map((category) => (
                   <motion.div
                     key={category.id}
-                    className="mb-10"
+                    className="mb-12"
                     variants={itemVariants}
                   >
                     {/* Main Category Header */}
-                    <div className="flex items-center gap-4 mb-6">
+                    <div className="flex items-center gap-4 mb-8">
                       <span className="text-primary font-display text-[50px] md:text-[60px] italic leading-none opacity-30">
                         {category.id}
                       </span>
@@ -466,50 +764,76 @@ const Kurallar = () => {
                     </div>
 
                     {/* Sub Categories */}
-                    <div className="space-y-6 ml-4 md:ml-8">
+                    <div className="space-y-10">
                       {category.subCategories.map((subCat) => (
-                        <div
-                          key={subCat.id}
-                          className="bg-secondary/20 rounded-2xl p-5 md:p-6 border border-border/10 hover:border-primary/20 transition-colors duration-300"
-                        >
+                        <div key={subCat.id} className="ml-4 md:ml-8">
                           {/* Sub Category Header */}
-                          <div className="flex items-center gap-3 mb-4">
-                            <span className="text-primary/50 font-mono text-lg md:text-xl">
+                          <div className="flex items-center gap-3 mb-3">
+                            <span className="bg-secondary/50 border border-border/30 text-foreground/70 font-mono text-sm px-3 py-1 rounded-md">
                               {subCat.id}
                             </span>
-                            <h4 className="font-display text-lg md:text-xl lg:text-2xl text-foreground/90 italic">
-                              {subCat.title}
+                            <h4 className="font-display text-xl md:text-2xl lg:text-3xl text-primary italic">
+                              {category.id}. {subCat.title}
                             </h4>
                           </div>
+                          {subCat.description && (
+                            <p className="text-foreground/50 text-sm mb-6 ml-1">
+                              {subCat.description}
+                            </p>
+                          )}
 
-                          {/* Rules List */}
-                          <ul className="space-y-3 ml-2 md:ml-4">
+                          {/* Rules Cards */}
+                          <div className="space-y-4">
                             {subCat.rules.map((rule) => (
-                              <motion.li
+                              <motion.div
                                 key={rule.id}
                                 ref={(el) => (sectionRefs.current[rule.id] = el)}
-                                className={`flex items-start gap-3 p-3 rounded-xl transition-all duration-300 ${
+                                className={`bg-secondary/30 rounded-2xl p-5 md:p-6 border transition-all duration-300 ${
                                   activeRule === rule.id
-                                    ? "bg-primary/15 border border-primary/30"
-                                    : "hover:bg-secondary/30"
+                                    ? "border-primary/50 bg-secondary/40"
+                                    : "border-border/20 hover:border-primary/30"
                                 }`}
-                                initial={{ opacity: 0, x: -10 }}
-                                whileInView={{ opacity: 1, x: 0 }}
+                                initial={{ opacity: 0, y: 10 }}
+                                whileInView={{ opacity: 1, y: 0 }}
                                 viewport={{ once: true }}
                               >
-                                <span className="text-primary font-mono text-xs md:text-sm flex-shrink-0 pt-0.5 min-w-[52px]">
-                                  {rule.id}
-                                </span>
-                                <span className="text-foreground/80 text-sm md:text-base leading-relaxed">
-                                  {searchQuery ? (
-                                    <HighlightText text={rule.title} query={searchQuery} />
-                                  ) : (
-                                    rule.title
-                                  )}
-                                </span>
-                              </motion.li>
+                                {/* Rule Header */}
+                                <div className="flex items-center gap-3 mb-4">
+                                  <span className="bg-secondary/60 border border-border/40 text-foreground/60 font-mono text-xs px-2.5 py-1 rounded-md">
+                                    {rule.id}
+                                  </span>
+                                  <h5 className="font-display text-lg md:text-xl text-primary italic">
+                                    {searchQuery ? (
+                                      <HighlightText text={rule.title} query={searchQuery} />
+                                    ) : (
+                                      rule.title
+                                    )}
+                                  </h5>
+                                </div>
+
+                                {/* Rule Description with bullet point */}
+                                <div className="flex items-start gap-3 ml-1">
+                                  <span className="w-2 h-2 rounded-full bg-primary/60 mt-2 flex-shrink-0"></span>
+                                  <p className="text-foreground/80 text-sm md:text-base leading-relaxed">
+                                    {searchQuery ? (
+                                      <HighlightText text={rule.description} query={searchQuery} />
+                                    ) : (
+                                      rule.description
+                                    )}
+                                  </p>
+                                </div>
+
+                                {/* Last Update */}
+                                {rule.lastUpdate && (
+                                  <div className="flex justify-end mt-4">
+                                    <span className="text-foreground/30 text-xs font-mono">
+                                      Son güncelleme: {rule.lastUpdate}
+                                    </span>
+                                  </div>
+                                )}
+                              </motion.div>
                             ))}
-                          </ul>
+                          </div>
                         </div>
                       ))}
                     </div>
