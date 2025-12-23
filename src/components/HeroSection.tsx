@@ -5,33 +5,40 @@ import hourglassIcon from "@/assets/hourglass-icon.png";
 
 // Generate floating particles
 const generateFloatingParticles = (count: number) => {
-  return Array.from({ length: count }, (_, i) => ({
+  return Array.from({
+    length: count
+  }, (_, i) => ({
     id: i,
     x: Math.random() * 100,
     y: Math.random() * 100,
     size: 2 + Math.random() * 4,
     duration: 15 + Math.random() * 20,
-    delay: Math.random() * 5,
+    delay: Math.random() * 5
   }));
 };
-
 const HeroSection = () => {
   const sectionRef = useRef<HTMLElement>(null);
   const particles = useMemo(() => generateFloatingParticles(30), []);
-  
-  const { scrollYProgress } = useScroll({
+  const {
+    scrollYProgress
+  } = useScroll({
     target: sectionRef,
-    offset: ["start start", "end start"],
+    offset: ["start start", "end start"]
   });
-
-  const smoothProgress = useSpring(scrollYProgress, { stiffness: 100, damping: 30 });
+  const smoothProgress = useSpring(scrollYProgress, {
+    stiffness: 100,
+    damping: 30
+  });
   const backgroundY = useTransform(smoothProgress, [0, 1], ["0%", "30%"]);
   const backgroundScale = useTransform(smoothProgress, [0, 1], [1, 1.1]);
   const textY = useTransform(smoothProgress, [0, 1], ["0%", "50%"]);
   const opacity = useTransform(smoothProgress, [0, 0.5], [1, 0]);
-
   const letterVariants = {
-    hidden: { opacity: 0, y: 80, rotateX: -90 },
+    hidden: {
+      opacity: 0,
+      y: 80,
+      rotateX: -90
+    },
     visible: (i: number) => ({
       opacity: 1,
       y: 0,
@@ -39,206 +46,173 @@ const HeroSection = () => {
       transition: {
         duration: 0.8,
         delay: 0.5 + i * 0.08,
-        ease: [0.6, -0.05, 0.01, 0.99] as [number, number, number, number],
-      },
-    }),
+        ease: [0.6, -0.05, 0.01, 0.99] as [number, number, number, number]
+      }
+    })
   };
-
-  return (
-    <section ref={sectionRef} className="relative min-h-screen flex items-end overflow-hidden pb-8">
+  return <section ref={sectionRef} className="relative min-h-screen flex items-end overflow-hidden pb-8">
       {/* Floating Particles */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none z-[5]">
-        {particles.map((particle) => (
-          <motion.div
-            key={particle.id}
-            className="absolute rounded-full bg-primary/30"
-            style={{
-              width: particle.size,
-              height: particle.size,
-              left: `${particle.x}%`,
-              top: `${particle.y}%`,
-            }}
-            animate={{
-              y: [0, -100, 0],
-              x: [0, Math.random() * 50 - 25, 0],
-              opacity: [0, 0.6, 0],
-              scale: [0.5, 1, 0.5],
-            }}
-            transition={{
-              duration: particle.duration,
-              delay: particle.delay,
-              repeat: Infinity,
-              ease: "easeInOut",
-            }}
-          />
-        ))}
+        {particles.map(particle => <motion.div key={particle.id} className="absolute rounded-full bg-primary/30" style={{
+        width: particle.size,
+        height: particle.size,
+        left: `${particle.x}%`,
+        top: `${particle.y}%`
+      }} animate={{
+        y: [0, -100, 0],
+        x: [0, Math.random() * 50 - 25, 0],
+        opacity: [0, 0.6, 0],
+        scale: [0.5, 1, 0.5]
+      }} transition={{
+        duration: particle.duration,
+        delay: particle.delay,
+        repeat: Infinity,
+        ease: "easeInOut"
+      }} />)}
       </div>
 
       {/* Background Image with Parallax */}
-      <motion.div 
-        className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-        style={{ 
-          backgroundImage: `url(${heroBg})`,
-          y: backgroundY,
-          scale: backgroundScale,
-        }}
-      >
+      <motion.div className="absolute inset-0 bg-cover bg-center bg-no-repeat" style={{
+      backgroundImage: "url(\"/lovable-uploads/dd368db9-058d-4606-b265-f0f7a4014bb6.jpg\")",
+      y: backgroundY,
+      scale: backgroundScale
+    }}>
         <div className="absolute inset-0 bg-gradient-to-t from-background via-background/40 to-background/20" />
         <div className="absolute inset-0 bg-gradient-to-r from-background/50 via-transparent to-background/50" />
         {/* Vignette effect */}
         <div className="absolute inset-0" style={{
-          background: "radial-gradient(ellipse at center, transparent 0%, hsl(var(--background) / 0.4) 70%, hsl(var(--background) / 0.8) 100%)",
-        }} />
+        background: "radial-gradient(ellipse at center, transparent 0%, hsl(var(--background) / 0.4) 70%, hsl(var(--background) / 0.8) 100%)"
+      }} />
       </motion.div>
 
       {/* Animated light rays */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <motion.div
-          className="absolute top-0 left-1/4 w-[2px] h-full bg-gradient-to-b from-primary/20 via-primary/5 to-transparent"
-          animate={{ opacity: [0.3, 0.6, 0.3], x: [0, 50, 0] }}
-          transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
-        />
-        <motion.div
-          className="absolute top-0 right-1/3 w-[1px] h-full bg-gradient-to-b from-primary/15 via-primary/5 to-transparent"
-          animate={{ opacity: [0.2, 0.5, 0.2], x: [0, -30, 0] }}
-          transition={{ duration: 10, repeat: Infinity, ease: "easeInOut", delay: 2 }}
-        />
+        <motion.div className="absolute top-0 left-1/4 w-[2px] h-full bg-gradient-to-b from-primary/20 via-primary/5 to-transparent" animate={{
+        opacity: [0.3, 0.6, 0.3],
+        x: [0, 50, 0]
+      }} transition={{
+        duration: 8,
+        repeat: Infinity,
+        ease: "easeInOut"
+      }} />
+        <motion.div className="absolute top-0 right-1/3 w-[1px] h-full bg-gradient-to-b from-primary/15 via-primary/5 to-transparent" animate={{
+        opacity: [0.2, 0.5, 0.2],
+        x: [0, -30, 0]
+      }} transition={{
+        duration: 10,
+        repeat: Infinity,
+        ease: "easeInOut",
+        delay: 2
+      }} />
       </div>
 
       {/* Content */}
-      <motion.div 
-        className="container mx-auto px-6 relative z-10"
-        style={{ opacity }}
-      >
+      <motion.div className="container mx-auto px-6 relative z-10" style={{
+      opacity
+    }}>
         <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-8 pb-16">
           {/* Left Content */}
-          <motion.div 
-            className="max-w-xl"
-            style={{ y: textY }}
-          >
-            <motion.h1 
-              className="font-display text-[100px] md:text-[140px] lg:text-[180px] text-foreground leading-[0.85] tracking-tight mb-8 italic perspective-1000"
-            >
+          <motion.div className="max-w-xl" style={{
+          y: textY
+        }}>
+            <motion.h1 className="font-display text-[100px] md:text-[140px] lg:text-[180px] text-foreground leading-[0.85] tracking-tight mb-8 italic perspective-1000">
               <div className="overflow-visible">
-                {"ESCAPE".split("").map((letter, i) => (
-                  <motion.span
-                    key={`escape-${i}`}
-                    className="inline-block"
-                    custom={i}
-                    variants={letterVariants}
-                    initial="hidden"
-                    animate="visible"
-                    whileHover={{ 
-                      scale: 1.1, 
-                      color: "hsl(var(--primary))",
-                      textShadow: "0 0 30px hsl(var(--primary) / 0.8)",
-                    }}
-                  >
+                {"ESCAPE".split("").map((letter, i) => <motion.span key={`escape-${i}`} className="inline-block" custom={i} variants={letterVariants} initial="hidden" animate="visible" whileHover={{
+                scale: 1.1,
+                color: "hsl(var(--primary))",
+                textShadow: "0 0 30px hsl(var(--primary) / 0.8)"
+              }}>
                     {letter}
-                  </motion.span>
-                ))}
+                  </motion.span>)}
               </div>
               <div className="overflow-visible">
-                {"ROOM".split("").map((letter, i) => (
-                  <motion.span
-                    key={`room-${i}`}
-                    className="inline-block"
-                    custom={i + 6}
-                    variants={letterVariants}
-                    initial="hidden"
-                    animate="visible"
-                    whileHover={{ 
-                      scale: 1.1, 
-                      color: "hsl(var(--primary))",
-                      textShadow: "0 0 30px hsl(var(--primary) / 0.8)",
-                    }}
-                  >
+                {"ROOM".split("").map((letter, i) => <motion.span key={`room-${i}`} className="inline-block" custom={i + 6} variants={letterVariants} initial="hidden" animate="visible" whileHover={{
+                scale: 1.1,
+                color: "hsl(var(--primary))",
+                textShadow: "0 0 30px hsl(var(--primary) / 0.8)"
+              }}>
                     {letter}
-                  </motion.span>
-                ))}
+                  </motion.span>)}
               </div>
             </motion.h1>
-            <motion.p 
-              className="text-foreground/40 text-[11px] max-w-[200px] leading-relaxed"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 1.5 }}
-            >
+            <motion.p className="text-foreground/40 text-[11px] max-w-[200px] leading-relaxed" initial={{
+            opacity: 0,
+            y: 20
+          }} animate={{
+            opacity: 1,
+            y: 0
+          }} transition={{
+            duration: 0.8,
+            delay: 1.5
+          }}>
               Step into a world of puzzles, traps, and unexpected twists — an escape room that won't let you go until the very end
             </motion.p>
           </motion.div>
 
           {/* Right Content - Quest Card */}
-          <motion.div
-            initial={{ opacity: 0, y: 50, scale: 0.9 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            transition={{ duration: 0.8, delay: 1.2 }}
-          >
-            <motion.div 
-              className="bg-card/80 backdrop-blur-sm border border-border/30 rounded-2xl p-4 inline-flex items-start gap-4 min-w-[180px] relative overflow-hidden"
-              whileHover={{ 
-                scale: 1.05, 
-                y: -5,
-                boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 40px hsl(var(--primary) / 0.2)",
-                borderColor: "hsl(var(--primary) / 0.4)",
-              }}
-              transition={{ duration: 0.3 }}
-            >
+          <motion.div initial={{
+          opacity: 0,
+          y: 50,
+          scale: 0.9
+        }} animate={{
+          opacity: 1,
+          y: 0,
+          scale: 1
+        }} transition={{
+          duration: 0.8,
+          delay: 1.2
+        }}>
+            <motion.div className="bg-card/80 backdrop-blur-sm border border-border/30 rounded-2xl p-4 inline-flex items-start gap-4 min-w-[180px] relative overflow-hidden" whileHover={{
+            scale: 1.05,
+            y: -5,
+            boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 40px hsl(var(--primary) / 0.2)",
+            borderColor: "hsl(var(--primary) / 0.4)"
+          }} transition={{
+            duration: 0.3
+          }}>
               {/* Card shimmer effect */}
-              <motion.div
-                className="absolute inset-0 pointer-events-none"
-                style={{
-                  background: "linear-gradient(90deg, transparent 0%, hsl(var(--primary) / 0.1) 50%, transparent 100%)",
-                }}
-                animate={{ x: ["-100%", "200%"] }}
-                transition={{ duration: 3, repeat: Infinity, repeatDelay: 3 }}
-              />
+              <motion.div className="absolute inset-0 pointer-events-none" style={{
+              background: "linear-gradient(90deg, transparent 0%, hsl(var(--primary) / 0.1) 50%, transparent 100%)"
+            }} animate={{
+              x: ["-100%", "200%"]
+            }} transition={{
+              duration: 3,
+              repeat: Infinity,
+              repeatDelay: 3
+            }} />
               
               <div className="flex-1 relative z-10">
-                <motion.div 
-                  className="bg-primary text-primary-foreground text-[9px] font-medium px-2 py-0.5 rounded inline-block mb-2 uppercase tracking-wider"
-                  animate={{ 
-                    boxShadow: [
-                      "0 0 0px hsl(var(--primary) / 0)",
-                      "0 0 20px hsl(var(--primary) / 0.6)",
-                      "0 0 0px hsl(var(--primary) / 0)",
-                    ]
-                  }}
-                  transition={{ duration: 2, repeat: Infinity }}
-                >
+                <motion.div className="bg-primary text-primary-foreground text-[9px] font-medium px-2 py-0.5 rounded inline-block mb-2 uppercase tracking-wider" animate={{
+                boxShadow: ["0 0 0px hsl(var(--primary) / 0)", "0 0 20px hsl(var(--primary) / 0.6)", "0 0 0px hsl(var(--primary) / 0)"]
+              }} transition={{
+                duration: 2,
+                repeat: Infinity
+              }}>
                   New Quest
                 </motion.div>
                 <h3 className="font-display text-xl text-foreground leading-tight tracking-wide">
-                  THE LAST<br/>HOUR
+                  THE LAST<br />HOUR
                 </h3>
-                <motion.span 
-                  className="text-primary text-lg mt-1 inline-block"
-                  animate={{ x: [0, 8, 0], scale: [1, 1.1, 1] }}
-                  transition={{ duration: 1.5, repeat: Infinity }}
-                >
+                <motion.span className="text-primary text-lg mt-1 inline-block" animate={{
+                x: [0, 8, 0],
+                scale: [1, 1.1, 1]
+              }} transition={{
+                duration: 1.5,
+                repeat: Infinity
+              }}>
                   ↗
                 </motion.span>
               </div>
               <div className="w-16 h-20 flex items-center justify-center relative z-10">
-                <motion.img 
-                  src={hourglassIcon} 
-                  alt="Hourglass" 
-                  className="w-14 h-14 object-contain"
-                  animate={{ 
-                    y: [0, -10, 0],
-                    rotate: [0, 8, 0, -8, 0],
-                    filter: [
-                      "drop-shadow(0 0 10px hsl(var(--primary) / 0.3))",
-                      "drop-shadow(0 0 25px hsl(var(--primary) / 0.6))",
-                      "drop-shadow(0 0 10px hsl(var(--primary) / 0.3))",
-                    ],
-                  }}
-                  transition={{ 
-                    duration: 4, 
-                    repeat: Infinity,
-                    ease: "easeInOut",
-                  }}
-                />
+                <motion.img src={hourglassIcon} alt="Hourglass" className="w-14 h-14 object-contain" animate={{
+                y: [0, -10, 0],
+                rotate: [0, 8, 0, -8, 0],
+                filter: ["drop-shadow(0 0 10px hsl(var(--primary) / 0.3))", "drop-shadow(0 0 25px hsl(var(--primary) / 0.6))", "drop-shadow(0 0 10px hsl(var(--primary) / 0.3))"]
+              }} transition={{
+                duration: 4,
+                repeat: Infinity,
+                ease: "easeInOut"
+              }} />
               </div>
             </motion.div>
           </motion.div>
@@ -246,33 +220,31 @@ const HeroSection = () => {
       </motion.div>
 
       {/* Large X on floor - positioned center bottom */}
-      <motion.div 
-        className="absolute bottom-0 left-1/2 -translate-x-1/2 pointer-events-none"
-        initial={{ opacity: 0, scale: 0.5 }}
-        animate={{ opacity: 0.3, scale: 1 }}
-        transition={{ duration: 1, delay: 1.5 }}
-      >
-        <motion.div 
-          className="text-primary font-display text-[250px] md:text-[350px] leading-none"
-          animate={{ 
-            opacity: [0.2, 0.4, 0.2],
-            textShadow: [
-              "0 0 40px hsl(var(--primary) / 0.3), 0 0 80px hsl(var(--primary) / 0.2)",
-              "0 0 80px hsl(var(--primary) / 0.6), 0 0 120px hsl(var(--primary) / 0.4)",
-              "0 0 40px hsl(var(--primary) / 0.3), 0 0 80px hsl(var(--primary) / 0.2)",
-            ],
-            scale: [1, 1.02, 1],
-          }}
-          transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-        >
+      <motion.div className="absolute bottom-0 left-1/2 -translate-x-1/2 pointer-events-none" initial={{
+      opacity: 0,
+      scale: 0.5
+    }} animate={{
+      opacity: 0.3,
+      scale: 1
+    }} transition={{
+      duration: 1,
+      delay: 1.5
+    }}>
+        <motion.div className="text-primary font-display text-[250px] md:text-[350px] leading-none" animate={{
+        opacity: [0.2, 0.4, 0.2],
+        textShadow: ["0 0 40px hsl(var(--primary) / 0.3), 0 0 80px hsl(var(--primary) / 0.2)", "0 0 80px hsl(var(--primary) / 0.6), 0 0 120px hsl(var(--primary) / 0.4)", "0 0 40px hsl(var(--primary) / 0.3), 0 0 80px hsl(var(--primary) / 0.2)"],
+        scale: [1, 1.02, 1]
+      }} transition={{
+        duration: 4,
+        repeat: Infinity,
+        ease: "easeInOut"
+      }}>
           ✕
         </motion.div>
       </motion.div>
 
       {/* Bottom gradient overlay */}
       <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-background to-transparent pointer-events-none" />
-    </section>
-  );
+    </section>;
 };
-
 export default HeroSection;
