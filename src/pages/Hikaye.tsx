@@ -1,13 +1,13 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
-import { Map, BookOpen, Info } from "lucide-react";
+import { Map, BookOpen, Info, ChevronUp } from "lucide-react";
 import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from "@/components/ui/hover-card";
 
 const storyContent = [
   {
@@ -41,38 +41,41 @@ const Hikaye = () => {
   const [activeTab, setActiveTab] = useState<"whimsical" | "hikaye">("whimsical");
   const [scrollProgress, setScrollProgress] = useState(0);
   const [activeSection, setActiveSection] = useState("giris");
-  const contentRef = useRef<HTMLDivElement>(null);
+  const [showScrollTop, setShowScrollTop] = useState(false);
 
   useEffect(() => {
     if (activeTab !== "hikaye") return;
 
     const handleScroll = () => {
-      if (!contentRef.current) return;
-      
-      const element = contentRef.current;
-      const scrollTop = element.scrollTop;
-      const scrollHeight = element.scrollHeight - element.clientHeight;
-      const progress = scrollHeight > 0 ? (scrollTop / scrollHeight) * 100 : 0;
+      const scrollTop = window.scrollY;
+      const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+      const progress = docHeight > 0 ? (scrollTop / docHeight) * 100 : 0;
       setScrollProgress(progress);
+      setShowScrollTop(scrollTop > 300);
 
-      const sections = element.querySelectorAll("[data-section]");
-      sections.forEach((section) => {
-        const rect = section.getBoundingClientRect();
-        const elementRect = element.getBoundingClientRect();
-        if (rect.top <= elementRect.top + 150) {
-          setActiveSection(section.getAttribute("data-section") || "giris");
+      // Find active section
+      storyContent.forEach((section) => {
+        const element = document.querySelector(`[data-section="${section.id}"]`);
+        if (element) {
+          const rect = element.getBoundingClientRect();
+          if (rect.top <= 200) {
+            setActiveSection(section.id);
+          }
         }
       });
     };
 
-    const element = contentRef.current;
-    element?.addEventListener("scroll", handleScroll);
-    return () => element?.removeEventListener("scroll", handleScroll);
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
   }, [activeTab]);
 
   const scrollToSection = (sectionId: string) => {
     const element = document.querySelector(`[data-section="${sectionId}"]`);
     element?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   return (
@@ -92,6 +95,21 @@ const Hikaye = () => {
           />
         </div>
       )}
+
+      {/* Scroll to Top Button */}
+      <AnimatePresence>
+        {activeTab === "hikaye" && showScrollTop && (
+          <motion.button
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.8 }}
+            onClick={scrollToTop}
+            className="fixed bottom-8 right-8 z-50 w-12 h-12 bg-primary text-primary-foreground rounded-full flex items-center justify-center shadow-lg box-glow hover:scale-110 transition-transform"
+          >
+            <ChevronUp className="w-5 h-5" />
+          </motion.button>
+        )}
+      </AnimatePresence>
 
       <main className="flex-1 pt-32 pb-20 relative z-10">
         <div className="container mx-auto px-4">
@@ -130,18 +148,18 @@ const Hikaye = () => {
                   exit={{ opacity: 0, x: 10 }}
                   transition={{ duration: 0.2 }}
                 >
-                  <Tooltip>
-                    <TooltipTrigger asChild>
+                  <HoverCard openDelay={0} closeDelay={100}>
+                    <HoverCardTrigger asChild>
                       <button className="w-8 h-8 rounded-full border border-border bg-secondary flex items-center justify-center text-muted-foreground hover:text-primary hover:border-primary transition-all duration-300">
                         <Info className="w-3.5 h-3.5" />
                       </button>
-                    </TooltipTrigger>
-                    <TooltipContent side="bottom" className="max-w-xs bg-card border border-border p-3">
+                    </HoverCardTrigger>
+                    <HoverCardContent side="bottom" className="w-64 bg-card border border-border p-3">
                       <p className="text-xs text-foreground">
                         Whimsical bilgi metni buraya gelecek.
                       </p>
-                    </TooltipContent>
-                  </Tooltip>
+                    </HoverCardContent>
+                  </HoverCard>
                 </motion.div>
               )}
             </AnimatePresence>
@@ -187,18 +205,18 @@ const Hikaye = () => {
                   exit={{ opacity: 0, x: -10 }}
                   transition={{ duration: 0.2 }}
                 >
-                  <Tooltip>
-                    <TooltipTrigger asChild>
+                  <HoverCard openDelay={0} closeDelay={100}>
+                    <HoverCardTrigger asChild>
                       <button className="w-8 h-8 rounded-full border border-border bg-secondary flex items-center justify-center text-muted-foreground hover:text-primary hover:border-primary transition-all duration-300">
                         <Info className="w-3.5 h-3.5" />
                       </button>
-                    </TooltipTrigger>
-                    <TooltipContent side="bottom" className="max-w-xs bg-card border border-border p-3">
+                    </HoverCardTrigger>
+                    <HoverCardContent side="bottom" className="w-64 bg-card border border-border p-3">
                       <p className="text-xs text-foreground">
                         Hikaye bilgi metni buraya gelecek.
                       </p>
-                    </TooltipContent>
-                  </Tooltip>
+                    </HoverCardContent>
+                  </HoverCard>
                 </motion.div>
               )}
             </AnimatePresence>
@@ -231,11 +249,11 @@ const Hikaye = () => {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -20 }}
                 transition={{ duration: 0.4 }}
-                className="flex justify-center"
+                className="flex justify-center gap-8"
               >
                 {/* İçindekiler - Sticky Sol Taraf */}
                 <aside className="hidden lg:block w-48 shrink-0">
-                  <div className="sticky top-32 pr-6">
+                  <div className="sticky top-32">
                     <h3 className="text-xs text-primary tracking-[0.2em] uppercase mb-4">
                       İÇİNDEKİLER
                     </h3>
@@ -260,17 +278,14 @@ const Hikaye = () => {
                   </div>
                 </aside>
 
-                {/* Story Content - Glass Effect */}
-                <div
-                  ref={contentRef}
-                  className="w-full max-w-4xl max-h-[65vh] overflow-y-auto"
-                >
-                  <div className="bg-background/40 backdrop-blur-md border border-border/50 rounded-sm p-10 md:p-14 shadow-xl">
+                {/* Story Content - Glass Effect, No Height Limit */}
+                <div className="w-full max-w-5xl">
+                  <div className="bg-background/30 backdrop-blur-lg border border-border/40 rounded-sm p-10 md:p-14 shadow-2xl">
                     {storyContent.map((section, index) => (
                       <motion.section
                         key={section.id}
                         data-section={section.id}
-                        className={`mb-12 ${index !== 0 ? "pt-10 border-t border-border/30" : ""}`}
+                        className={`mb-16 ${index !== 0 ? "pt-12 border-t border-border/20" : ""}`}
                         initial={{ opacity: 0, y: 15 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: index * 0.1 }}
