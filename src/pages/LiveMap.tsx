@@ -3,7 +3,7 @@ import { Excalidraw } from '@excalidraw/excalidraw';
 import '@excalidraw/excalidraw/index.css';
 import type { ExcalidrawImperativeAPI, AppState, BinaryFiles } from '@excalidraw/excalidraw/types';
 import { supabase } from '@/integrations/supabase/client';
-import { Loader2, Eye, EyeOff, Wifi, WifiOff, RefreshCw, AlertTriangle } from 'lucide-react';
+import { Loader2, Eye, EyeOff, Wifi, WifiOff, RefreshCw, AlertTriangle, Crosshair } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
@@ -15,49 +15,127 @@ interface SceneData {
   files: BinaryFiles;
 }
 
+// Normalize files: ensure each file has an id field
+const normalizeFiles = (files: BinaryFiles | undefined): BinaryFiles => {
+  if (!files || typeof files !== 'object') return {};
+  
+  const normalized: BinaryFiles = {};
+  for (const [key, value] of Object.entries(files)) {
+    if (value && typeof value === 'object') {
+      normalized[key] = {
+        ...value,
+        id: (value as any).id || key,
+        mimeType: (value as any).mimeType || ((value as any).dataURL?.match(/^data:([^;,]+)/)?.[1] || 'image/png'),
+      };
+    }
+  }
+  return normalized;
+};
+
 export default function LiveMap() {
   const [excalidrawAPI, setExcalidrawAPI] = useState<ExcalidrawImperativeAPI | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [whiteboardId, setWhiteboardId] = useState<string | null>(null);
-  const [initialData, setInitialData] = useState<SceneData | null>(null);
   const [isConnected, setIsConnected] = useState(false);
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
   const [followMode, setFollowMode] = useState(true);
   const [elementCount, setElementCount] = useState(0);
+  const [fileCount, setFileCount] = useState(0);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [apiReady, setApiReady] = useState(false);
   
-  const excalidrawAPIRef = useRef<ExcalidrawImperativeAPI | null>(null);
+  const sceneDataRef = useRef<SceneData | null>(null);
 
-  // Keep ref in sync
-  useEffect(() => {
-    excalidrawAPIRef.current = excalidrawAPI;
-  }, [excalidrawAPI]);
+  // Apply scene to Excalidraw - single source of truth
+  const applyScene = useCallback((api: ExcalidrawImperativeAPI, sceneData: SceneData, shouldScroll = true) => {
+    if (!api || !sceneData) {
+      console.warn('[LiveMap] applyScene: missing api or sceneData');
+      return;
+    }
 
-  // Scroll to content helper
-  const scrollToContent = useCallback(() => {
-    const api = excalidrawAPIRef.current;
-    if (!api) return;
+    const elements = sceneData.elements || [];
+    const files = normalizeFiles(sceneData.files);
+    const filesArray = Object.values(files);
+
+    console.log('[LiveMap] applyScene:', {
+      elementsCount: elements.length,
+      filesCount: filesArray.length,
+      firstElement: elements[0] ? { type: elements[0].type, x: elements[0].x, y: elements[0].y } : null,
+    });
+
+    // Step 1: Add files FIRST (so images can reference them)
+    if (filesArray.length > 0) {
+      try {
+        api.addFiles(filesArray);
+        console.log('[LiveMap] Files added:', filesArray.length);
+      } catch (err) {
+        console.error('[LiveMap] Error adding files:', err);
+      }
+    }
+
+    // Step 2: Update scene with elements
+    try {
+      api.updateScene({
+        elements: elements,
+        appState: {
+          viewModeEnabled: true,
+          zenModeEnabled: true,
+          gridModeEnabled: false,
+        },
+      });
+      console.log('[LiveMap] Scene updated with', elements.length, 'elements');
+    } catch (err) {
+      console.error('[LiveMap] Error updating scene:', err);
+    }
+
+    // Step 3: Scroll to content if follow mode is on
+    if (shouldScroll && followMode && elements.length > 0) {
+      setTimeout(() => {
+        try {
+          api.scrollToContent(elements, {
+            fitToViewport: true,
+            viewportZoomFactor: 0.85,
+          });
+          console.log('[LiveMap] Scrolled to content');
+        } catch (err) {
+          console.error('[LiveMap] Error scrolling:', err);
+        }
+      }, 150);
+    }
+
+    // Update counts
+    setElementCount(elements.length);
+    setFileCount(filesArray.length);
+    setLastUpdate(new Date());
+  }, [followMode]);
+
+  // Center camera on content
+  const handleCenterCamera = useCallback(() => {
+    if (!excalidrawAPI) return;
     
     try {
-      const elements = api.getSceneElements();
-      if (elements.length > 0) {
-        api.scrollToContent(elements, {
-          fitToViewport: true,
-          viewportZoomFactor: 0.9,
-        });
+      const elements = excalidrawAPI.getSceneElements();
+      if (elements.length === 0) {
+        toast.info('Haritada öğe yok');
+        return;
       }
-    } catch (e) {
-      console.log('[LiveMap] scrollToContent not available');
+      excalidrawAPI.scrollToContent(elements, {
+        fitToViewport: true,
+        viewportZoomFactor: 0.85,
+      });
+      toast.success('Kamera merkeze alındı');
+    } catch (err) {
+      console.error('[LiveMap] Center camera error:', err);
     }
-  }, []);
+  }, [excalidrawAPI]);
 
-  // Load whiteboard data function (reusable)
+  // Load whiteboard data
   const loadWhiteboard = useCallback(async (showToast = false) => {
     try {
       console.log('[LiveMap] Loading whiteboard...');
       const { data, error } = await supabase
         .from('whiteboards')
-        .select('*')
+        .select('id, scene_data')
         .eq('name', 'Ana Harita')
         .maybeSingle();
 
@@ -74,16 +152,17 @@ export default function LiveMap() {
         
         if (sceneData) {
           const count = sceneData.elements?.length || 0;
-          const fileCount = sceneData.files ? Object.keys(sceneData.files).length : 0;
+          const fCount = sceneData.files ? Object.keys(sceneData.files).length : 0;
           
-          console.log('[LiveMap] Scene data:', { elements: count, files: fileCount });
+          console.log('[LiveMap] Scene data from DB:', { elements: count, files: fCount });
+          sceneDataRef.current = sceneData;
           setElementCount(count);
+          setFileCount(fCount);
           
-          if (count > 0) {
-            setInitialData(sceneData);
-            if (showToast) toast.success(`${count} öğe yüklendi`);
-            return sceneData;
+          if (showToast) {
+            toast.success(`${count} öğe, ${fCount} dosya yüklendi`);
           }
+          return sceneData;
         }
         
         if (showToast) toast.info('Harita boş');
@@ -105,40 +184,34 @@ export default function LiveMap() {
     init();
   }, [loadWhiteboard]);
 
+  // Apply scene when API becomes ready and we have data
+  useEffect(() => {
+    if (apiReady && excalidrawAPI && sceneDataRef.current) {
+      console.log('[LiveMap] API ready, applying initial scene');
+      // Small delay to ensure Excalidraw is fully mounted
+      setTimeout(() => {
+        applyScene(excalidrawAPI, sceneDataRef.current!, true);
+      }, 100);
+    }
+  }, [apiReady, excalidrawAPI, applyScene]);
+
   // Manual refresh
   const handleRefresh = async () => {
     setIsRefreshing(true);
     const sceneData = await loadWhiteboard(true);
     
     if (sceneData && excalidrawAPI) {
-      // Apply to existing instance
-      if (sceneData.files && Object.keys(sceneData.files).length > 0) {
-        excalidrawAPI.addFiles(Object.values(sceneData.files));
-      }
-      excalidrawAPI.updateScene({ elements: sceneData.elements });
-      
-      if (followMode) {
-        setTimeout(scrollToContent, 100);
-      }
+      applyScene(excalidrawAPI, sceneData, true);
     }
     
     setIsRefreshing(false);
   };
 
-  // Initial scroll to content after load
-  useEffect(() => {
-    if (!isLoading && excalidrawAPI && initialData && followMode) {
-      // Delay to ensure Excalidraw is fully rendered
-      const timer = setTimeout(scrollToContent, 500);
-      return () => clearTimeout(timer);
-    }
-  }, [isLoading, excalidrawAPI, initialData, followMode, scrollToContent]);
-
   // Subscribe to realtime updates
   useEffect(() => {
-    if (!whiteboardId || !excalidrawAPI) return;
+    if (!whiteboardId) return;
 
-    console.log('[LiveMap] Setting up realtime subscription...');
+    console.log('[LiveMap] Setting up realtime subscription for:', whiteboardId);
 
     const channel = supabase
       .channel('whiteboard-realtime')
@@ -154,32 +227,11 @@ export default function LiveMap() {
           console.log('[LiveMap] Realtime update received');
           const newSceneData = (payload.new as any).scene_data as SceneData;
           
-          if (newSceneData && newSceneData.elements) {
-            try {
-              const newElementCount = newSceneData.elements.length;
-              const newFileCount = newSceneData.files ? Object.keys(newSceneData.files).length : 0;
-              
-              console.log('[LiveMap] Applying update:', { elements: newElementCount, files: newFileCount });
-              
-              // IMPORTANT: Add files FIRST so images are available when elements render
-              if (newSceneData.files && Object.keys(newSceneData.files).length > 0) {
-                excalidrawAPI.addFiles(Object.values(newSceneData.files));
-              }
-
-              // Then update elements
-              excalidrawAPI.updateScene({
-                elements: newSceneData.elements,
-              });
-
-              setElementCount(newElementCount);
-              setLastUpdate(new Date());
-
-              // Auto-scroll to content if follow mode is on
-              if (followMode && newElementCount > 0) {
-                setTimeout(scrollToContent, 100);
-              }
-            } catch (e) {
-              console.error('[LiveMap] Error applying realtime update:', e);
+          if (newSceneData) {
+            sceneDataRef.current = newSceneData;
+            
+            if (excalidrawAPI) {
+              applyScene(excalidrawAPI, newSceneData, followMode);
             }
           }
         }
@@ -193,7 +245,14 @@ export default function LiveMap() {
       console.log('[LiveMap] Cleaning up realtime subscription');
       supabase.removeChannel(channel);
     };
-  }, [whiteboardId, excalidrawAPI, followMode, scrollToContent]);
+  }, [whiteboardId, excalidrawAPI, followMode, applyScene]);
+
+  // Handle API ready
+  const handleAPIReady = useCallback((api: ExcalidrawImperativeAPI) => {
+    console.log('[LiveMap] Excalidraw API ready');
+    setExcalidrawAPI(api);
+    setApiReady(true);
+  }, []);
 
   // Format last update time
   const formatLastUpdate = () => {
@@ -217,11 +276,22 @@ export default function LiveMap() {
           </Link>
           <h1 className="text-xl font-bold text-foreground">Canlı Harita</h1>
           <span className="text-xs text-muted-foreground bg-muted px-2 py-1 rounded">
-            {elementCount} öğe
+            {elementCount} öğe {fileCount > 0 && `• ${fileCount} dosya`}
           </span>
         </div>
         
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2">
+          {/* Center camera button */}
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleCenterCamera}
+            className="gap-2"
+          >
+            <Crosshair className="w-4 h-4" />
+            <span className="hidden sm:inline">Merkez</span>
+          </Button>
+
           {/* Refresh button */}
           <Button
             variant="ghost"
@@ -244,12 +314,12 @@ export default function LiveMap() {
             {followMode ? (
               <>
                 <Eye className="w-4 h-4" />
-                <span className="hidden sm:inline">Takip Açık</span>
+                <span className="hidden sm:inline">Takip</span>
               </>
             ) : (
               <>
                 <EyeOff className="w-4 h-4" />
-                <span className="hidden sm:inline">Takip Kapalı</span>
+                <span className="hidden sm:inline">Takip</span>
               </>
             )}
           </Button>
@@ -257,19 +327,13 @@ export default function LiveMap() {
           {/* Connection status */}
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
             {isConnected ? (
-              <>
-                <Wifi className="w-4 h-4 text-green-500" />
-                <span className="hidden sm:inline">Bağlı</span>
-              </>
+              <Wifi className="w-4 h-4 text-green-500" />
             ) : (
-              <>
-                <WifiOff className="w-4 h-4 text-red-500" />
-                <span className="hidden sm:inline">Bağlantı yok</span>
-              </>
+              <WifiOff className="w-4 h-4 text-red-500" />
             )}
             {lastUpdate && (
               <span className="text-muted-foreground/70">
-                • {formatLastUpdate()}
+                {formatLastUpdate()}
               </span>
             )}
           </div>
@@ -285,52 +349,45 @@ export default function LiveMap() {
               <p className="text-muted-foreground">Harita yükleniyor...</p>
             </div>
           </div>
-        ) : elementCount === 0 && !initialData ? (
-          <div className="absolute inset-0 flex items-center justify-center bg-background">
-            <div className="flex flex-col items-center gap-4 text-center p-8">
-              <AlertTriangle className="w-12 h-12 text-amber-500" />
-              <h2 className="text-xl font-semibold text-foreground">Harita Boş</h2>
-              <p className="text-muted-foreground max-w-md">
-                Henüz haritaya içerik eklenmemiş veya veriler yüklenemedi. 
-                Admin panelinden içerik ekleyebilir veya yenilemeyi deneyebilirsiniz.
-              </p>
-              <Button onClick={handleRefresh} disabled={isRefreshing} className="gap-2">
-                <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
-                Tekrar Yükle
-              </Button>
-            </div>
-          </div>
         ) : (
-          <div style={{ width: '100%', height: '100%' }}>
-            <Excalidraw
-              excalidrawAPI={(api) => setExcalidrawAPI(api)}
-              initialData={initialData ? {
-                elements: initialData.elements,
-                appState: {
-                  ...initialData.appState,
-                  viewModeEnabled: true,
-                },
-                files: initialData.files,
-              } : {
-                appState: {
-                  viewModeEnabled: true,
-                }
-              }}
-              viewModeEnabled={true}
-              zenModeEnabled={true}
-              theme="dark"
-              langCode="tr-TR"
-              UIOptions={{
-                canvasActions: {
-                  export: false,
-                  saveAsImage: false,
-                  loadScene: false,
-                  clearCanvas: false,
-                  toggleTheme: false,
-                },
-              }}
-            />
-          </div>
+          <>
+            {/* Empty state overlay */}
+            {elementCount === 0 && apiReady && (
+              <div className="absolute inset-0 flex items-center justify-center z-10 pointer-events-none">
+                <div className="bg-card/90 backdrop-blur-sm rounded-lg p-8 text-center border border-border pointer-events-auto">
+                  <AlertTriangle className="w-12 h-12 text-amber-500 mx-auto mb-4" />
+                  <h2 className="text-xl font-semibold text-foreground mb-2">Harita Boş</h2>
+                  <p className="text-muted-foreground mb-4 max-w-md">
+                    Admin panelinden içerik ekleyin
+                  </p>
+                  <Button onClick={handleRefresh} disabled={isRefreshing} className="gap-2">
+                    <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+                    Tekrar Yükle
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {/* Excalidraw - always render, apply scene when API is ready */}
+            <div style={{ width: '100%', height: '100%' }}>
+              <Excalidraw
+                excalidrawAPI={handleAPIReady}
+                viewModeEnabled={true}
+                zenModeEnabled={true}
+                theme="dark"
+                langCode="tr-TR"
+                UIOptions={{
+                  canvasActions: {
+                    export: false,
+                    saveAsImage: false,
+                    loadScene: false,
+                    clearCanvas: false,
+                    toggleTheme: false,
+                  },
+                }}
+              />
+            </div>
+          </>
         )}
       </div>
     </div>
