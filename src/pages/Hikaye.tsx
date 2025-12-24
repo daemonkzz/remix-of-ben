@@ -66,7 +66,7 @@ const Hikaye = () => {
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const fullscreenContainerRef = useRef<HTMLDivElement>(null);
-  const fullscreenOverlayRef = useRef<HTMLDivElement>(null);
+  
   const scrollLockRef = useRef<null | {
     scrollY: number;
     htmlOverflow: string;
@@ -94,11 +94,18 @@ const Hikaye = () => {
   };
 
   // Pan & Zoom handlers
-  const handleWheel = useCallback((e: WheelEvent) => {
-    e.preventDefault();
-    const delta = e.deltaY > 0 ? -0.15 : 0.15;
-    setScale(prev => Math.max(0.3, Math.min(5, prev + delta)));
+  const applyWheelDelta = useCallback((deltaY: number) => {
+    const delta = deltaY > 0 ? -0.15 : 0.15;
+    setScale((prev) => Math.max(0.3, Math.min(5, prev + delta)));
   }, []);
+
+  const handleWheel = useCallback(
+    (e: WheelEvent) => {
+      e.preventDefault();
+      applyWheelDelta(e.deltaY);
+    },
+    [applyWheelDelta]
+  );
 
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
     if (e.button !== 0) return;
@@ -153,15 +160,13 @@ const Hikaye = () => {
     setScale(prev => Math.max(0.3, prev - 0.3));
   }, []);
 
-  // Attach wheel listener to the active container
+  // Attach wheel listener to the map container (non-fullscreen)
   useEffect(() => {
-    const container = isFullscreen 
-      ? fullscreenContainerRef.current 
-      : mapContainerRef.current;
-    if (!container || activeTab !== "hikaye-tablosu") return;
+    const container = mapContainerRef.current;
+    if (!container || activeTab !== "hikaye-tablosu" || isFullscreen) return;
 
-    container.addEventListener('wheel', handleWheel, { passive: false });
-    return () => container.removeEventListener('wheel', handleWheel);
+    container.addEventListener("wheel", handleWheel, { passive: false });
+    return () => container.removeEventListener("wheel", handleWheel);
   }, [handleWheel, activeTab, isFullscreen]);
 
   const containerVariants: Variants = {
@@ -238,35 +243,32 @@ const Hikaye = () => {
     };
   }, [isFullscreen]);
 
-  // In fullscreen, prevent wheel/touchmove from scrolling the page (even over controls)
+  // In fullscreen, globally prevent scroll/bounce and use wheel to zoom (even over controls)
   useEffect(() => {
     if (!isFullscreen) return;
 
-    const overlay = fullscreenOverlayRef.current;
-    if (!overlay) return;
-
-    const preventWheel = (e: WheelEvent) => {
+    const onWheel = (e: WheelEvent) => {
       e.preventDefault();
+      e.stopPropagation();
+      applyWheelDelta(e.deltaY);
     };
 
-    const preventTouchMove = (e: TouchEvent) => {
+    const onTouchMove = (e: TouchEvent) => {
       e.preventDefault();
+      e.stopPropagation();
     };
 
-    overlay.addEventListener("wheel", preventWheel, {
-      passive: false,
-      capture: true,
-    });
-    overlay.addEventListener("touchmove", preventTouchMove, {
+    window.addEventListener("wheel", onWheel, { passive: false, capture: true });
+    window.addEventListener("touchmove", onTouchMove, {
       passive: false,
       capture: true,
     });
 
     return () => {
-      overlay.removeEventListener("wheel", preventWheel, true);
-      overlay.removeEventListener("touchmove", preventTouchMove, true);
+      window.removeEventListener("wheel", onWheel, true);
+      window.removeEventListener("touchmove", onTouchMove, true);
     };
-  }, [isFullscreen]);
+  }, [isFullscreen, applyWheelDelta]);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -304,156 +306,152 @@ const Hikaye = () => {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  // Fullscreen Map Component
-  const FullscreenMap = () => (
-    <motion.div
-      ref={fullscreenOverlayRef}
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      className="fixed inset-0 z-[100] bg-background overscroll-none touch-none"
-    >
-      {/* Floating particles in fullscreen too */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        {particles.slice(0, 10).map((particle) => (
-          <motion.div
-            key={`fs-${particle.id}`}
-            className="absolute rounded-full bg-primary/20"
-            style={{
-              width: particle.size,
-              height: particle.size,
-              left: `${particle.x}%`,
-              top: `${particle.y}%`,
-            }}
-            animate={{
-              y: [0, -80, 0],
-              x: [0, Math.random() * 40 - 20, 0],
-              opacity: [0, 0.5, 0],
-              scale: [0.5, 1, 0.5],
-            }}
-            transition={{
-              duration: particle.duration,
-              delay: particle.delay,
-              repeat: Infinity,
-              ease: "easeInOut",
-            }}
-          />
-        ))}
-      </div>
-
-      {/* Hero gradient */}
-      <div className="absolute inset-0 hero-gradient pointer-events-none" />
-
-      {/* Control buttons - top right */}
-      <div className="absolute top-4 right-4 z-20 flex items-center gap-2">
-        <div className="flex items-center gap-2 px-3 py-1.5 bg-background/60 backdrop-blur-sm rounded-full border border-border/30">
-          {isConnected ? (
-            <Wifi className="w-3.5 h-3.5 text-primary" />
-          ) : (
-            <WifiOff className="w-3.5 h-3.5 text-muted-foreground" />
-          )}
-          <span className="text-xs text-muted-foreground">
-            {elementCount} öğe
-          </span>
-        </div>
-
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={handleRefresh}
-          disabled={isRefreshing}
-          className="w-9 h-9 bg-background/60 backdrop-blur-sm border border-border/30 hover:bg-background/80"
-        >
-          <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
-        </Button>
-
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => setIsFullscreen(false)}
-          className="w-9 h-9 bg-background/60 backdrop-blur-sm border border-border/30 hover:bg-background/80"
-        >
-          <X className="w-4 h-4" />
-        </Button>
-      </div>
-
-      {/* Zoom controls - bottom right */}
-      <div className="absolute bottom-6 right-6 z-20 flex items-center gap-2">
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={zoomOut}
-          className="w-9 h-9 bg-background/60 backdrop-blur-sm border border-border/30 hover:bg-background/80"
-        >
-          <ZoomOut className="w-4 h-4" />
-        </Button>
-        <div className="px-3 py-1.5 bg-background/60 backdrop-blur-sm rounded-full border border-border/30 text-xs text-muted-foreground min-w-[60px] text-center">
-          {Math.round(scale * 100)}%
-        </div>
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={zoomIn}
-          className="w-9 h-9 bg-background/60 backdrop-blur-sm border border-border/30 hover:bg-background/80"
-        >
-          <ZoomIn className="w-4 h-4" />
-        </Button>
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={resetView}
-          className="w-9 h-9 bg-background/60 backdrop-blur-sm border border-border/30 hover:bg-background/80"
-        >
-          <RotateCcw className="w-4 h-4" />
-        </Button>
-      </div>
-
-      {/* Map content with pan/zoom */}
-      <div
-        ref={fullscreenContainerRef}
-        className="absolute inset-0 overflow-hidden overscroll-none touch-none cursor-grab active:cursor-grabbing"
-        onMouseDown={handleMouseDown}
-        onMouseMove={handleMouseMove}
-        onMouseUp={handleMouseUp}
-        onMouseLeave={handleMouseUp}
-        onTouchStart={handleTouchStart}
-        onTouchMove={handleTouchMove}
-        onTouchEnd={handleTouchEnd}
-      >
-        <div
-          className="absolute inset-0 flex items-center justify-center transition-transform duration-75"
-          style={{
-            transform: `translate(${position.x}px, ${position.y}px) scale(${scale})`,
-          }}
-        >
-          {isMapLoading ? (
-            <div className="flex flex-col items-center gap-4">
-              <Loader2 className="w-8 h-8 animate-spin text-primary" />
-              <p className="text-muted-foreground text-sm">Harita yükleniyor...</p>
-            </div>
-          ) : imageUrl ? (
-            <img
-              src={imageUrl}
-              alt="Hikaye Tablosu"
-              className="max-w-none select-none"
-              draggable={false}
-            />
-          ) : (
-            <div className="flex flex-col items-center gap-4 text-muted-foreground">
-              <Map className="w-16 h-16 opacity-30" />
-              <p className="text-sm">Harita boş</p>
-            </div>
-          )}
-        </div>
-      </div>
-    </motion.div>
-  );
 
   return (
     <div className="min-h-screen bg-background flex flex-col relative overflow-hidden">
       {/* Fullscreen Map */}
       <AnimatePresence>
-        {isFullscreen && <FullscreenMap />}
+        {isFullscreen && (
+          <motion.div
+            key="fullscreen-map"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] bg-background overscroll-none touch-none"
+          >
+            {/* Floating particles in fullscreen too */}
+            <div className="absolute inset-0 overflow-hidden pointer-events-none">
+              {particles.slice(0, 10).map((particle) => (
+                <motion.div
+                  key={`fs-${particle.id}`}
+                  className="absolute rounded-full bg-primary/20"
+                  style={{
+                    width: particle.size,
+                    height: particle.size,
+                    left: `${particle.x}%`,
+                    top: `${particle.y}%`,
+                  }}
+                  animate={{
+                    y: [0, -80, 0],
+                    x: [0, Math.random() * 40 - 20, 0],
+                    opacity: [0, 0.5, 0],
+                    scale: [0.5, 1, 0.5],
+                  }}
+                  transition={{
+                    duration: particle.duration,
+                    delay: particle.delay,
+                    repeat: Infinity,
+                    ease: "easeInOut",
+                  }}
+                />
+              ))}
+            </div>
+
+            {/* Hero gradient */}
+            <div className="absolute inset-0 hero-gradient pointer-events-none" />
+
+            {/* Control buttons - top right */}
+            <div className="absolute top-4 right-4 z-20 flex items-center gap-2">
+              <div className="flex items-center gap-2 px-3 py-1.5 bg-background/60 backdrop-blur-sm rounded-full border border-border/30">
+                {isConnected ? (
+                  <Wifi className="w-3.5 h-3.5 text-primary" />
+                ) : (
+                  <WifiOff className="w-3.5 h-3.5 text-muted-foreground" />
+                )}
+                <span className="text-xs text-muted-foreground">{elementCount} öğe</span>
+              </div>
+
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={handleRefresh}
+                disabled={isRefreshing}
+                className="w-9 h-9 bg-background/60 backdrop-blur-sm border border-border/30 hover:bg-background/80"
+              >
+                <RefreshCw className={`w-4 h-4 ${isRefreshing ? "animate-spin" : ""}`} />
+              </Button>
+
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setIsFullscreen(false)}
+                className="w-9 h-9 bg-background/60 backdrop-blur-sm border border-border/30 hover:bg-background/80"
+              >
+                <X className="w-4 h-4" />
+              </Button>
+            </div>
+
+            {/* Zoom controls - bottom right */}
+            <div className="absolute bottom-6 right-6 z-20 flex items-center gap-2">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={zoomOut}
+                className="w-9 h-9 bg-background/60 backdrop-blur-sm border border-border/30 hover:bg-background/80"
+              >
+                <ZoomOut className="w-4 h-4" />
+              </Button>
+              <div className="px-3 py-1.5 bg-background/60 backdrop-blur-sm rounded-full border border-border/30 text-xs text-muted-foreground min-w-[60px] text-center">
+                {Math.round(scale * 100)}%
+              </div>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={zoomIn}
+                className="w-9 h-9 bg-background/60 backdrop-blur-sm border border-border/30 hover:bg-background/80"
+              >
+                <ZoomIn className="w-4 h-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={resetView}
+                className="w-9 h-9 bg-background/60 backdrop-blur-sm border border-border/30 hover:bg-background/80"
+              >
+                <RotateCcw className="w-4 h-4" />
+              </Button>
+            </div>
+
+            {/* Map content with pan/zoom */}
+            <div
+              ref={fullscreenContainerRef}
+              className="absolute inset-0 overflow-hidden overscroll-none touch-none cursor-grab active:cursor-grabbing"
+              onMouseDown={handleMouseDown}
+              onMouseMove={handleMouseMove}
+              onMouseUp={handleMouseUp}
+              onMouseLeave={handleMouseUp}
+              onTouchStart={handleTouchStart}
+              onTouchMove={handleTouchMove}
+              onTouchEnd={handleTouchEnd}
+            >
+              <div
+                className="absolute inset-0 flex items-center justify-center transition-transform duration-75"
+                style={{
+                  transform: `translate(${position.x}px, ${position.y}px) scale(${scale})`,
+                }}
+              >
+                {isMapLoading ? (
+                  <div className="flex flex-col items-center gap-4">
+                    <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                    <p className="text-muted-foreground text-sm">Harita yükleniyor...</p>
+                  </div>
+                ) : imageUrl ? (
+                  <img
+                    src={imageUrl}
+                    alt="Hikaye Tablosu"
+                    className="max-w-none select-none"
+                    draggable={false}
+                  />
+                ) : (
+                  <div className="flex flex-col items-center gap-4 text-muted-foreground">
+                    <Map className="w-16 h-16 opacity-30" />
+                    <p className="text-sm">Harita boş</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          </motion.div>
+        )}
       </AnimatePresence>
 
       {/* Floating Particles */}
