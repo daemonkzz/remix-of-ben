@@ -23,22 +23,41 @@ interface AuthProviderProps {
   children: ReactNode;
 }
 
+// Helper function to clean URL hash
+const cleanUrlHash = () => {
+  if (window.location.hash && window.location.hash.includes('access_token')) {
+    const cleanUrl = window.location.pathname + window.location.search;
+    window.history.replaceState(null, '', cleanUrl);
+  }
+};
+
 export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    // Clean URL hash immediately on mount if present
+    cleanUrlHash();
+
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
+        console.log('Auth event:', event);
+        
         setSession(session);
         setUser(session?.user ?? null);
         setIsLoading(false);
 
-        // Clean URL hash after OAuth redirect
-        if (event === 'SIGNED_IN' && window.location.hash) {
-          window.history.replaceState(null, '', window.location.pathname);
+        // Log user info on sign in
+        if (event === 'SIGNED_IN' && session?.user) {
+          console.log('Oturum Açıldı:', session.user.email);
+          // Clean URL hash after OAuth redirect
+          cleanUrlHash();
+        }
+
+        if (event === 'SIGNED_OUT') {
+          console.log('Oturum Kapatıldı');
         }
       }
     );
@@ -49,9 +68,10 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       setUser(session?.user ?? null);
       setIsLoading(false);
 
-      // Clean URL hash if session exists
-      if (session && window.location.hash) {
-        window.history.replaceState(null, '', window.location.pathname);
+      if (session?.user) {
+        console.log('Mevcut Oturum:', session.user.email);
+        // Clean URL hash if session exists
+        cleanUrlHash();
       }
     });
 
