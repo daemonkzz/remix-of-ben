@@ -1,5 +1,5 @@
-import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import { Tldraw, Editor, TLAssetStore, AssetRecordType, getHashForString, getSnapshot, loadSnapshot } from 'tldraw';
+import { useState, useEffect, useCallback, useMemo } from 'react';
+import { Tldraw, Editor, TLAssetStore, getSnapshot, loadSnapshot } from 'tldraw';
 import 'tldraw/tldraw.css';
 import { supabase } from '@/integrations/supabase/client';
 import { AdminLayout } from '@/components/admin/AdminLayout';
@@ -136,37 +136,19 @@ export default function WhiteboardEditor() {
     }
   }, [whiteboardId]);
 
-  // Handle gallery image selection
+  // Handle gallery image selection - simplified for now
   const handleGallerySelect = useCallback((urls: string[]) => {
     if (!editor) return;
 
+    // For now, just create shapes with URL - tldraw will handle the asset creation
     urls.forEach((url, index) => {
-      // Create asset
-      const assetId = AssetRecordType.createId(getHashForString(url));
-      
-      editor.createAssets([{
-        id: assetId,
-        type: 'image',
-        typeName: 'asset',
-        props: {
-          name: 'Gallery Image',
-          src: url,
-          w: 400,
-          h: 300,
-          mimeType: 'image/webp',
-          isAnimated: false,
-        },
-        meta: {},
-      }]);
-
-      // Create image shape on canvas
       const viewportCenter = editor.getViewportScreenCenter();
       editor.createShape({
         type: 'image',
         x: viewportCenter.x - 200 + (index * 50),
         y: viewportCenter.y - 150 + (index * 50),
         props: {
-          assetId,
+          url,
           w: 400,
           h: 300,
         },
@@ -215,7 +197,7 @@ export default function WhiteboardEditor() {
   }, [initialSnapshot, saveWhiteboard]);
 
   return (
-    <AdminLayout>
+    <AdminLayout activeTab="canliharita">
       <div className="h-screen flex flex-col">
         {/* Toolbar */}
         <div className="bg-card border-b border-border p-4 flex items-center justify-between">
