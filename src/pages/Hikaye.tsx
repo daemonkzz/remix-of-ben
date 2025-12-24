@@ -1,8 +1,8 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { motion, AnimatePresence, Variants } from "framer-motion";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
-import { Map, BookOpen, Info, ChevronUp, Sparkles, Maximize2, Minimize2, RefreshCw, Loader2, X, Wifi, WifiOff } from "lucide-react";
+import { Map, BookOpen, Info, ChevronUp, Sparkles, Maximize2, RefreshCw, Loader2, X, Wifi, WifiOff, ZoomIn, ZoomOut, RotateCcw } from "lucide-react";
 import {
   HoverCard,
   HoverCardContent,
@@ -59,6 +59,13 @@ const Hikaye = () => {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const particles = useMemo(() => generateFloatingParticles(20), []);
 
+  // Pan & Zoom state
+  const [scale, setScale] = useState(1);
+  const [position, setPosition] = useState({ x: 0, y: 0 });
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+  const mapContainerRef = useRef<HTMLDivElement>(null);
+
   // Whiteboard viewer hook
   const {
     imageUrl,
@@ -76,6 +83,75 @@ const Hikaye = () => {
     await refreshMap();
     setIsRefreshing(false);
   };
+
+  // Pan & Zoom handlers
+  const handleWheel = useCallback((e: WheelEvent) => {
+    e.preventDefault();
+    const delta = e.deltaY > 0 ? -0.15 : 0.15;
+    setScale(prev => Math.max(0.3, Math.min(5, prev + delta)));
+  }, []);
+
+  const handleMouseDown = useCallback((e: React.MouseEvent) => {
+    if (e.button !== 0) return;
+    setIsDragging(true);
+    setDragStart({ x: e.clientX - position.x, y: e.clientY - position.y });
+  }, [position]);
+
+  const handleMouseMove = useCallback((e: React.MouseEvent) => {
+    if (!isDragging) return;
+    setPosition({
+      x: e.clientX - dragStart.x,
+      y: e.clientY - dragStart.y,
+    });
+  }, [isDragging, dragStart]);
+
+  const handleMouseUp = useCallback(() => {
+    setIsDragging(false);
+  }, []);
+
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    if (e.touches.length === 1) {
+      setIsDragging(true);
+      setDragStart({ 
+        x: e.touches[0].clientX - position.x, 
+        y: e.touches[0].clientY - position.y 
+      });
+    }
+  }, [position]);
+
+  const handleTouchMove = useCallback((e: React.TouchEvent) => {
+    if (!isDragging || e.touches.length !== 1) return;
+    setPosition({
+      x: e.touches[0].clientX - dragStart.x,
+      y: e.touches[0].clientY - dragStart.y,
+    });
+  }, [isDragging, dragStart]);
+
+  const handleTouchEnd = useCallback(() => {
+    setIsDragging(false);
+  }, []);
+
+  const resetView = useCallback(() => {
+    setScale(1);
+    setPosition({ x: 0, y: 0 });
+  }, []);
+
+  const zoomIn = useCallback(() => {
+    setScale(prev => Math.min(5, prev + 0.3));
+  }, []);
+
+  const zoomOut = useCallback(() => {
+    setScale(prev => Math.max(0.3, prev - 0.3));
+  }, []);
+
+  // Attach wheel listener
+  useEffect(() => {
+    const container = mapContainerRef.current;
+    if (!container || activeTab !== "hikaye-tablosu") return;
+
+    container.addEventListener('wheel', handleWheel, { passive: false });
+    return () => container.removeEventListener('wheel', handleWheel);
+  }, [handleWheel, activeTab]);
 
   const containerVariants: Variants = {
     hidden: { opacity: 0 },
@@ -166,12 +242,42 @@ const Hikaye = () => {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-[100] bg-background flex flex-col"
+      className="fixed inset-0 z-[100] bg-background"
     >
-      {/* Minimal header */}
-      <div className="absolute top-4 right-4 z-10 flex items-center gap-2">
-        {/* Connection status */}
-        <div className="flex items-center gap-2 px-3 py-1.5 bg-background/80 backdrop-blur-sm rounded-full border border-border/30">
+      {/* Floating particles in fullscreen too */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        {particles.slice(0, 10).map((particle) => (
+          <motion.div
+            key={`fs-${particle.id}`}
+            className="absolute rounded-full bg-primary/20"
+            style={{
+              width: particle.size,
+              height: particle.size,
+              left: `${particle.x}%`,
+              top: `${particle.y}%`,
+            }}
+            animate={{
+              y: [0, -80, 0],
+              x: [0, Math.random() * 40 - 20, 0],
+              opacity: [0, 0.5, 0],
+              scale: [0.5, 1, 0.5],
+            }}
+            transition={{
+              duration: particle.duration,
+              delay: particle.delay,
+              repeat: Infinity,
+              ease: "easeInOut",
+            }}
+          />
+        ))}
+      </div>
+
+      {/* Hero gradient */}
+      <div className="absolute inset-0 hero-gradient pointer-events-none" />
+
+      {/* Control buttons - top right */}
+      <div className="absolute top-4 right-4 z-20 flex items-center gap-2">
+        <div className="flex items-center gap-2 px-3 py-1.5 bg-background/60 backdrop-blur-sm rounded-full border border-border/30">
           {isConnected ? (
             <Wifi className="w-3.5 h-3.5 text-primary" />
           ) : (
@@ -182,48 +288,94 @@ const Hikaye = () => {
           </span>
         </div>
 
-        {/* Refresh button */}
         <Button
           variant="ghost"
           size="icon"
           onClick={handleRefresh}
           disabled={isRefreshing}
-          className="w-9 h-9 bg-background/80 backdrop-blur-sm border border-border/30 hover:bg-background"
+          className="w-9 h-9 bg-background/60 backdrop-blur-sm border border-border/30 hover:bg-background/80"
         >
           <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
         </Button>
 
-        {/* Close button */}
         <Button
           variant="ghost"
           size="icon"
           onClick={() => setIsFullscreen(false)}
-          className="w-9 h-9 bg-background/80 backdrop-blur-sm border border-border/30 hover:bg-background"
+          className="w-9 h-9 bg-background/60 backdrop-blur-sm border border-border/30 hover:bg-background/80"
         >
           <X className="w-4 h-4" />
         </Button>
       </div>
 
-      {/* Map content */}
-      <div className="flex-1 flex items-center justify-center overflow-auto">
-        {isMapLoading ? (
-          <div className="flex flex-col items-center gap-4">
-            <Loader2 className="w-8 h-8 animate-spin text-primary" />
-            <p className="text-muted-foreground text-sm">Harita yükleniyor...</p>
-          </div>
-        ) : imageUrl ? (
-          <img
-            src={imageUrl}
-            alt="Hikaye Tablosu"
-            className="max-w-full max-h-full object-contain"
-            draggable={false}
-          />
-        ) : (
-          <div className="flex flex-col items-center gap-4 text-muted-foreground">
-            <Map className="w-16 h-16 opacity-30" />
-            <p className="text-sm">Harita boş</p>
-          </div>
-        )}
+      {/* Zoom controls - bottom right */}
+      <div className="absolute bottom-6 right-6 z-20 flex items-center gap-2">
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={zoomOut}
+          className="w-9 h-9 bg-background/60 backdrop-blur-sm border border-border/30 hover:bg-background/80"
+        >
+          <ZoomOut className="w-4 h-4" />
+        </Button>
+        <div className="px-3 py-1.5 bg-background/60 backdrop-blur-sm rounded-full border border-border/30 text-xs text-muted-foreground min-w-[60px] text-center">
+          {Math.round(scale * 100)}%
+        </div>
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={zoomIn}
+          className="w-9 h-9 bg-background/60 backdrop-blur-sm border border-border/30 hover:bg-background/80"
+        >
+          <ZoomIn className="w-4 h-4" />
+        </Button>
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={resetView}
+          className="w-9 h-9 bg-background/60 backdrop-blur-sm border border-border/30 hover:bg-background/80"
+        >
+          <RotateCcw className="w-4 h-4" />
+        </Button>
+      </div>
+
+      {/* Map content with pan/zoom */}
+      <div
+        ref={mapContainerRef}
+        className="absolute inset-0 overflow-hidden cursor-grab active:cursor-grabbing"
+        onMouseDown={handleMouseDown}
+        onMouseMove={handleMouseMove}
+        onMouseUp={handleMouseUp}
+        onMouseLeave={handleMouseUp}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+      >
+        <div
+          className="absolute inset-0 flex items-center justify-center transition-transform duration-75"
+          style={{
+            transform: `translate(${position.x}px, ${position.y}px) scale(${scale})`,
+          }}
+        >
+          {isMapLoading ? (
+            <div className="flex flex-col items-center gap-4">
+              <Loader2 className="w-8 h-8 animate-spin text-primary" />
+              <p className="text-muted-foreground text-sm">Harita yükleniyor...</p>
+            </div>
+          ) : imageUrl ? (
+            <img
+              src={imageUrl}
+              alt="Hikaye Tablosu"
+              className="max-w-none select-none"
+              draggable={false}
+            />
+          ) : (
+            <div className="flex flex-col items-center gap-4 text-muted-foreground">
+              <Map className="w-16 h-16 opacity-30" />
+              <p className="text-sm">Harita boş</p>
+            </div>
+          )}
+        </div>
       </div>
     </motion.div>
   );
@@ -501,78 +653,132 @@ const Hikaye = () => {
             {activeTab === "hikaye-tablosu" && (
               <motion.div
                 key="hikaye-tablosu"
-                initial={{ opacity: 0, y: 30 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
-                transition={{ duration: 0.5 }}
-                className="w-full aspect-video relative bg-[#0a0a0f] rounded-lg flex items-center justify-center border border-border/30 overflow-hidden group"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.4 }}
+                className="relative -mx-4 md:-mx-6"
               >
-                {/* Fullscreen button */}
-                <div className="absolute top-4 right-4 z-10 flex items-center gap-2">
-                  {/* Connection indicator */}
-                  <div className="flex items-center gap-2 px-3 py-1.5 bg-background/60 backdrop-blur-sm rounded-full border border-border/30">
-                    {isConnected ? (
-                      <Wifi className="w-3.5 h-3.5 text-primary" />
+                {/* Seamless map container - full width, no borders */}
+                <div
+                  ref={mapContainerRef}
+                  className="w-full h-[calc(100vh-320px)] min-h-[500px] relative overflow-hidden cursor-grab active:cursor-grabbing"
+                  onMouseDown={handleMouseDown}
+                  onMouseMove={handleMouseMove}
+                  onMouseUp={handleMouseUp}
+                  onMouseLeave={handleMouseUp}
+                  onTouchStart={handleTouchStart}
+                  onTouchMove={handleTouchMove}
+                  onTouchEnd={handleTouchEnd}
+                >
+                  {/* Map image with pan/zoom */}
+                  <div
+                    className="absolute inset-0 flex items-center justify-center transition-transform duration-75"
+                    style={{
+                      transform: `translate(${position.x}px, ${position.y}px) scale(${scale})`,
+                    }}
+                  >
+                    {isMapLoading ? (
+                      <div className="flex flex-col items-center gap-4">
+                        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                        <p className="text-muted-foreground text-sm">Harita yükleniyor...</p>
+                      </div>
+                    ) : imageUrl ? (
+                      <img
+                        src={imageUrl}
+                        alt="Hikaye Tablosu"
+                        className="max-w-none select-none"
+                        draggable={false}
+                      />
                     ) : (
-                      <WifiOff className="w-3.5 h-3.5 text-muted-foreground" />
+                      <div className="text-center">
+                        <motion.div
+                          animate={{ 
+                            opacity: [0.3, 0.5, 0.3],
+                            scale: [1, 1.05, 1],
+                          }}
+                          transition={{ duration: 3, repeat: Infinity }}
+                        >
+                          <Map className="w-16 h-16 text-muted-foreground/20 mx-auto mb-4" />
+                        </motion.div>
+                        <p className="text-muted-foreground/60 text-sm">
+                          Harita boş
+                        </p>
+                      </div>
                     )}
-                    <span className="text-xs text-muted-foreground">
-                      {elementCount} öğe
-                    </span>
                   </div>
 
-                  {/* Refresh button */}
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={handleRefresh}
-                    disabled={isRefreshing}
-                    className="w-8 h-8 bg-background/60 backdrop-blur-sm border border-border/30 hover:bg-background/80"
-                  >
-                    <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin' : ''}`} />
-                  </Button>
+                  {/* Control buttons - top right */}
+                  <div className="absolute top-4 right-4 z-10 flex items-center gap-2">
+                    <div className="flex items-center gap-2 px-3 py-1.5 bg-background/60 backdrop-blur-sm rounded-full border border-border/30">
+                      {isConnected ? (
+                        <Wifi className="w-3.5 h-3.5 text-primary" />
+                      ) : (
+                        <WifiOff className="w-3.5 h-3.5 text-muted-foreground" />
+                      )}
+                      <span className="text-xs text-muted-foreground">
+                        {elementCount} öğe
+                      </span>
+                    </div>
 
-                  {/* Fullscreen button */}
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => setIsFullscreen(true)}
-                    className="w-8 h-8 bg-background/60 backdrop-blur-sm border border-border/30 hover:bg-background/80"
-                  >
-                    <Maximize2 className="w-3.5 h-3.5" />
-                  </Button>
-                </div>
-
-                {/* Map content */}
-                {isMapLoading ? (
-                  <div className="flex flex-col items-center gap-4">
-                    <Loader2 className="w-8 h-8 animate-spin text-primary" />
-                    <p className="text-muted-foreground text-sm">Harita yükleniyor...</p>
-                  </div>
-                ) : imageUrl ? (
-                  <img
-                    src={imageUrl}
-                    alt="Hikaye Tablosu"
-                    className="w-full h-full object-contain cursor-pointer"
-                    onClick={() => setIsFullscreen(true)}
-                    draggable={false}
-                  />
-                ) : (
-                  <div className="text-center relative z-10">
-                    <motion.div
-                      animate={{ 
-                        opacity: [0.3, 0.5, 0.3],
-                        scale: [1, 1.05, 1],
-                      }}
-                      transition={{ duration: 3, repeat: Infinity }}
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={handleRefresh}
+                      disabled={isRefreshing}
+                      className="w-8 h-8 bg-background/60 backdrop-blur-sm border border-border/30 hover:bg-background/80"
                     >
-                      <Map className="w-16 h-16 text-muted-foreground/20 mx-auto mb-4" />
-                    </motion.div>
-                    <p className="text-muted-foreground/60 text-sm">
-                      Harita boş
+                      <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin' : ''}`} />
+                    </Button>
+
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => setIsFullscreen(true)}
+                      className="w-8 h-8 bg-background/60 backdrop-blur-sm border border-border/30 hover:bg-background/80"
+                    >
+                      <Maximize2 className="w-3.5 h-3.5" />
+                    </Button>
+                  </div>
+
+                  {/* Zoom controls - bottom right */}
+                  <div className="absolute bottom-4 right-4 z-10 flex items-center gap-2">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={zoomOut}
+                      className="w-8 h-8 bg-background/60 backdrop-blur-sm border border-border/30 hover:bg-background/80"
+                    >
+                      <ZoomOut className="w-3.5 h-3.5" />
+                    </Button>
+                    <div className="px-3 py-1 bg-background/60 backdrop-blur-sm rounded-full border border-border/30 text-xs text-muted-foreground min-w-[50px] text-center">
+                      {Math.round(scale * 100)}%
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={zoomIn}
+                      className="w-8 h-8 bg-background/60 backdrop-blur-sm border border-border/30 hover:bg-background/80"
+                    >
+                      <ZoomIn className="w-3.5 h-3.5" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={resetView}
+                      className="w-8 h-8 bg-background/60 backdrop-blur-sm border border-border/30 hover:bg-background/80"
+                    >
+                      <RotateCcw className="w-3.5 h-3.5" />
+                    </Button>
+                  </div>
+
+                  {/* Usage hint - bottom left */}
+                  <div className="absolute bottom-4 left-4 z-10">
+                    <p className="text-xs text-muted-foreground/50">
+                      Sürükle: gezin • Scroll: yakınlaştır
                     </p>
                   </div>
-                )}
+                </div>
               </motion.div>
             )}
 
