@@ -1,11 +1,13 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link, useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, Save, ChevronRight, ChevronLeft, Send, Check } from "lucide-react";
+import { ArrowLeft, Save, ChevronRight, ChevronLeft, Send, Check, Loader2 } from "lucide-react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { useApplicationForm, FormStep } from "@/hooks/useApplicationForm";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 
 // Form configurations for different application types
 const formConfigs: Record<string, { title: string; steps: FormStep[] }> = {
@@ -174,6 +176,8 @@ const BasvuruForm = () => {
   const { formId } = useParams<{ formId: string }>();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { user } = useAuth();
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const particles = useMemo(() => generateFloatingParticles(15), []);
 
   const formConfig = formId ? formConfigs[formId] : null;
@@ -185,6 +189,7 @@ const BasvuruForm = () => {
     updateField,
     saveField,
     saveAll,
+    clearSaved,
     nextStep,
     prevStep,
     goToStep,
@@ -214,14 +219,62 @@ const BasvuruForm = () => {
     });
   };
 
-  const handleSubmit = () => {
-    // Save before submitting
-    saveAll();
-    toast({
-      title: "Başvurunuz Gönderildi",
-      description: "Başvurunuz incelemeye alınacaktır.",
-    });
-    navigate("/basvuru");
+  const handleSubmit = async () => {
+    // Check if user is authenticated
+    if (!user) {
+      toast({
+        title: "Giriş Yapmalısınız",
+        description: "Başvuru göndermek için giriş yapmanız gerekmektedir.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Validate form ID
+    if (!formId || !['lspd-akademi', 'sirket', 'taksici', 'hastane'].includes(formId)) {
+      toast({
+        title: "Hata",
+        description: "Geçersiz başvuru türü.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      const { error } = await supabase
+        .from('applications')
+        .insert({
+          user_id: user.id,
+          type: formId,
+          content: formData,
+          status: 'pending'
+        });
+
+      if (error) {
+        console.error('Application submit error:', error);
+        throw error;
+      }
+
+      // Clear localStorage after successful submission
+      clearSaved();
+      
+      toast({
+        title: "Başvurunuz Gönderildi",
+        description: "Başvurunuz incelemeye alınacaktır.",
+      });
+      navigate("/basvuru");
+    } catch (error) {
+      console.error('Submit error:', error);
+      toast({
+        title: "Hata",
+        description: "Başvuru gönderilirken bir hata oluştu. Lütfen tekrar deneyin.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const renderField = (field: typeof currentStepData.fields[0]) => {
@@ -493,11 +546,20 @@ const BasvuruForm = () => {
                 {currentStep === totalSteps - 1 ? (
                   <button
                     onClick={handleSubmit}
-                    disabled={!isCurrentStepValid()}
+                    disabled={!isCurrentStepValid() || isSubmitting}
                     className="flex items-center gap-2 px-5 py-2.5 text-sm bg-primary text-background rounded-lg hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                   >
-                    <Send className="w-4 h-4" />
-                    Gönder
+                    {isSubmitting ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        Gönderiliyor...
+                      </>
+                    ) : (
+                      <>
+                        <Send className="w-4 h-4" />
+                        Gönder
+                      </>
+                    )}
                   </button>
                 ) : (
                   <button
