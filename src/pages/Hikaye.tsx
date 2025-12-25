@@ -755,10 +755,10 @@ const Hikaye = () => {
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
                         transition={{ duration: 0.2 }}
-                        className="absolute top-4 left-1/2 -translate-x-1/2 z-20 pointer-events-none"
+                        className="absolute top-2 left-1/2 -translate-x-1/2 z-20 pointer-events-none"
                         style={{ overflowAnchor: 'none' }}
                       >
-                        <div className="pointer-events-auto bg-background/70 backdrop-blur-md border border-border/40 rounded-full px-4 py-2 shadow-lg">
+                        <div className="pointer-events-auto bg-background/60 backdrop-blur-md border border-border/30 rounded-full px-2.5 py-1.5 shadow-lg">
                           <OnlineUsersBar maxVisible={10} />
                         </div>
                       </motion.div>
