@@ -44,13 +44,15 @@ const OnlineUsersBar: React.FC<OnlineUsersBarProps> = ({ maxVisible = 8 }) => {
                     <motion.div
                       layout
                       initial={{ scale: 0.8, opacity: 0 }}
-                      animate={{ scale: 1, opacity: 1 }}
-                      exit={{ scale: 0.8, opacity: 0 }}
-                      transition={{ 
-                        type: "spring",
-                        stiffness: 500,
-                        damping: 30,
-                        mass: 1
+                      animate={{ 
+                        scale: 1, 
+                        opacity: 1,
+                        transition: { type: "spring", stiffness: 500, damping: 30 }
+                      }}
+                      exit={{ 
+                        scale: 0.8, 
+                        opacity: 0,
+                        transition: { duration: 0.25, delay: 0.2 }
                       }}
                       className="relative"
                     >
