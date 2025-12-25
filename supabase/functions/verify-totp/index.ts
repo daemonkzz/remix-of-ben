@@ -1,19 +1,29 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.1';
 
-// Güvenli CORS yapılandırması - sadece kendi domain'lerimize izin ver
+// Güvenli CORS yapılandırması - Lovable domain'lerine izin ver
 const getAllowedOrigin = (requestOrigin: string | null): string => {
   const allowedOrigins = [
     'https://bbuatycybtwblwyychag.supabase.co',
-    'https://hayalrp.lovable.app', // Production URL
-    'http://localhost:5173', // Development
-    'http://localhost:8080', // Development alternative
+    'http://localhost:5173',
+    'http://localhost:8080',
   ];
   
+  // Tam eşleşme kontrolü
   if (requestOrigin && allowedOrigins.includes(requestOrigin)) {
     return requestOrigin;
   }
   
-  // Fallback - en güvenli seçenek
+  // Lovable app URL'lerini dinamik olarak kabul et (*.lovable.app)
+  if (requestOrigin && requestOrigin.endsWith('.lovable.app')) {
+    return requestOrigin;
+  }
+  
+  // Lovable preview URL'lerini dinamik olarak kabul et (*.lovableproject.com)
+  if (requestOrigin && requestOrigin.endsWith('.lovableproject.com')) {
+    return requestOrigin;
+  }
+  
+  // Fallback
   return allowedOrigins[0];
 };
 
