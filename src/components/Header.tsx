@@ -169,14 +169,15 @@ const Header = () => {
                 variants={navLinkVariants}
                 initial="initial"
                 animate="animate"
+                whileHover="hover"
                 transition={{ delay: 0.6 }}
               >
-                <span 
-                  className="text-foreground/30 cursor-not-allowed text-[11px] tracking-wider font-light italic"
-                  title="Yakında"
+                <button 
+                  type="button"
+                  className="text-foreground/50 hover:text-foreground transition-colors text-[11px] tracking-wider font-light italic"
                 >
                   Harita
-                </span>
+                </button>
               </motion.div>
             </div>
           </div>
@@ -375,12 +376,12 @@ const Header = () => {
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.4 }}
               >
-                <span 
-                  className="block py-3 px-4 text-foreground/30 cursor-not-allowed text-sm"
-                  title="Yakında"
+                <button 
+                  type="button"
+                  className="block py-3 px-4 text-foreground/70 hover:text-primary transition-colors text-sm text-left w-full"
                 >
                   Harita
-                </span>
+                </button>
               </motion.div>
               <div className="px-4 pt-4 border-t border-border/30 mt-2">
                 {!isLoading && user ? (
