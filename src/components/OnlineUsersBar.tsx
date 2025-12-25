@@ -31,14 +31,8 @@ const OnlineUsersBar: React.FC<OnlineUsersBarProps> = ({ maxVisible = 8 }) => {
 
   return (
     <TooltipProvider delayDuration={200}>
-      <div className="flex items-center justify-center gap-3">
-        {/* Online indicator */}
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <Users className="w-4 h-4" />
-          <span className="hidden sm:inline">Online:</span>
-        </div>
-
-        {/* Avatars */}
+      <div className="flex items-center justify-center">
+        {/* Avatars only */}
         <div className="flex -space-x-2">
           <AnimatePresence mode="popLayout">
             {visibleUsers.map((user) => {
@@ -103,7 +97,7 @@ const OnlineUsersBar: React.FC<OnlineUsersBarProps> = ({ maxVisible = 8 }) => {
               <motion.div
                 initial={{ scale: 0 }}
                 animate={{ scale: 1 }}
-                className="w-8 h-8 rounded-full bg-muted border-2 border-border flex items-center justify-center text-xs font-medium text-muted-foreground cursor-pointer hover:bg-accent transition-colors"
+                className="w-8 h-8 rounded-full bg-muted border-2 border-border flex items-center justify-center text-xs font-medium text-muted-foreground cursor-pointer hover:bg-accent transition-colors ml-2"
               >
                 +{overflowCount}
               </motion.div>
@@ -113,11 +107,6 @@ const OnlineUsersBar: React.FC<OnlineUsersBarProps> = ({ maxVisible = 8 }) => {
             </TooltipContent>
           </Tooltip>
         )}
-
-        {/* Total count */}
-        <span className="text-sm text-muted-foreground">
-          {onlineUsers.length} kişi
-        </span>
       </div>
     </TooltipProvider>
   );
