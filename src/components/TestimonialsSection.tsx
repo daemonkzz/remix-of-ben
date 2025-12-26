@@ -6,11 +6,15 @@ import { supabase } from "@/integrations/supabase/client";
 import testimonialBg from "@/assets/testimonial-bg.png";
 import type { UpdateCategory } from "@/types/update";
 
+import sunsetSilhouette from "@/assets/gallery/sunset-silhouette.webp";
+import twoGuards from "@/assets/gallery/two-guards.webp";
+import policeGroup from "@/assets/gallery/police-group.webp";
+
 // Add your testimonial images here
 const testimonialCards = [
-  { id: 1, image: "https://bbuatycybtwblwyychag.supabase.co/storage/v1/object/public/gallery/1766592076884-gbe4mr.webp" },
-  { id: 2, image: "https://bbuatycybtwblwyychag.supabase.co/storage/v1/object/public/gallery/1766592077583-juxzyc.webp" },
-  { id: 3, image: "https://bbuatycybtwblwyychag.supabase.co/storage/v1/object/public/gallery/1766592076280-ioldz.webp" },
+  { id: 1, image: sunsetSilhouette },
+  { id: 2, image: twoGuards },
+  { id: 3, image: policeGroup },
 ];
 
 interface UpdateNote {
