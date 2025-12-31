@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { Loader2, Bell, Plus, Filter, Pencil, Trash2, ToggleLeft, ToggleRight } from 'lucide-react';
+import { Loader2, Bell, Plus, Filter, Pencil, Trash2, ToggleLeft, ToggleRight, MessageSquare } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -17,9 +17,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import type { UpdateData } from '@/types/update';
 import type { UpdateFilterType, UpdateStatusFilterType } from '@/types/application';
 import { formatDateTime } from '@/lib/formatters';
+import { useDiscordNotification } from '@/hooks/useDiscordNotification';
 
 interface UpdatesTabProps {
   updates: UpdateData[];
@@ -45,6 +52,7 @@ export const UpdatesTab = ({
   setDeletingUpdateId,
 }: UpdatesTabProps) => {
   const navigate = useNavigate();
+  const { sendUpdateNotification, isSending: isDiscordSending } = useDiscordNotification();
 
   const filteredUpdates = updates.filter(update => {
     const categoryMatch = updateFilter === 'all' || update.category === updateFilter;
@@ -156,6 +164,28 @@ export const UpdatesTab = ({
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex items-center justify-end gap-2">
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => sendUpdateNotification(update)}
+                              disabled={!update.is_published || isDiscordSending}
+                              className={update.is_published ? 'text-[#5865F2] hover:text-[#5865F2] hover:bg-[#5865F2]/10' : ''}
+                            >
+                              {isDiscordSending ? (
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                              ) : (
+                                <MessageSquare className="w-4 h-4" />
+                              )}
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            {update.is_published ? "Discord'a Gönder" : 'Önce yayınlayın'}
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
                       <Button
                         size="sm"
                         variant="ghost"
