@@ -13,9 +13,9 @@ import {
   Pencil,
   BookOpen,
   FolderOpen,
-  FileText,
   Eye,
   Download,
+  HelpCircle,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -39,6 +39,8 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { AdminLayout } from '@/components/admin/AdminLayout';
+import { RuleEditorCard, RuleFormatGuide } from '@/components/admin/rules';
+import { RuleContentRenderer } from '@/components/rules/RuleContentRenderer';
 import type { MainCategory, SubCategory, Rule } from '@/types/rules';
 import { kazeRulesData } from '@/data/rulesData';
 
@@ -326,6 +328,14 @@ const RulesEditorContent = () => {
           </p>
         </div>
         <div className="flex items-center gap-3">
+          <RuleFormatGuide
+            trigger={
+              <Button variant="outline" size="sm">
+                <HelpCircle className="w-4 h-4 mr-2" />
+                Format Rehberi
+              </Button>
+            }
+          />
           <Button
             variant="outline"
             onClick={() => setImportConfirm(true)}
@@ -524,65 +534,16 @@ const RulesEditorContent = () => {
                                   </Button>
 
                                   {subCategory.rules.map((rule) => (
-                                    <div key={rule.id} className="ml-10 p-3 border border-border rounded-lg bg-background">
-                                      <div className="flex items-start gap-3">
-                                        <GripVertical className="w-4 h-4 text-muted-foreground mt-1" />
-                                        <FileText className="w-4 h-4 text-primary mt-1" />
-                                        <div className="flex-1 space-y-2">
-                                          {editingItem?.type === 'rule' && editingItem.id === rule.id ? (
-                                            <>
-                                              <Input
-                                                value={rule.title}
-                                                onChange={(e) => updateRule(category.id, subCategory.id, rule.id, { title: e.target.value })}
-                                                placeholder="Kural başlığı"
-                                                autoFocus
-                                              />
-                                              <Textarea
-                                                value={rule.description}
-                                                onChange={(e) => updateRule(category.id, subCategory.id, rule.id, { description: e.target.value })}
-                                                placeholder="Kural açıklaması"
-                                                rows={2}
-                                              />
-                                              <Button
-                                                size="sm"
-                                                onClick={() => setEditingItem(null)}
-                                              >
-                                                Tamam
-                                              </Button>
-                                            </>
-                                          ) : (
-                                            <>
-                                              <div className="flex items-center justify-between">
-                                                <span className="font-medium">{rule.title}</span>
-                                                <div className="flex items-center gap-1">
-                                                  <Button
-                                                    variant="ghost"
-                                                    size="icon"
-                                                    className="h-7 w-7"
-                                                    onClick={() => setEditingItem({ type: 'rule', id: rule.id })}
-                                                  >
-                                                    <Pencil className="w-3 h-3" />
-                                                  </Button>
-                                                  <Button
-                                                    variant="ghost"
-                                                    size="icon"
-                                                    className="h-7 w-7"
-                                                    onClick={() => setDeleteConfirm({ type: 'rule', id: rule.id, parentId: category.id, subParentId: subCategory.id })}
-                                                  >
-                                                    <Trash2 className="w-3 h-3 text-destructive" />
-                                                  </Button>
-                                                </div>
-                                              </div>
-                                              <p className="text-sm text-muted-foreground">{rule.description}</p>
-                                              {rule.lastUpdate && (
-                                                <p className="text-xs text-muted-foreground">
-                                                  Son güncelleme: {formatDate(rule.lastUpdate)}
-                                                </p>
-                                              )}
-                                            </>
-                                          )}
-                                        </div>
-                                      </div>
+                                    <div key={rule.id} className="ml-10">
+                                      <RuleEditorCard
+                                        rule={rule}
+                                        isEditing={editingItem?.type === 'rule' && editingItem.id === rule.id}
+                                        onEdit={() => setEditingItem({ type: 'rule', id: rule.id })}
+                                        onCancelEdit={() => setEditingItem(null)}
+                                        onUpdate={(updates) => updateRule(category.id, subCategory.id, rule.id, updates)}
+                                        onDelete={() => setDeleteConfirm({ type: 'rule', id: rule.id, parentId: category.id, subParentId: subCategory.id })}
+                                        formatDate={formatDate}
+                                      />
                                     </div>
                                   ))}
                                 </div>
@@ -614,6 +575,9 @@ const RulesEditorContent = () => {
         <TabsContent value="preview">
           <div className="bg-card border border-border rounded-lg p-6">
             <h3 className="text-xl font-bold mb-6 text-foreground">Kurallar Önizleme</h3>
+            <p className="text-sm text-muted-foreground mb-6">
+              Bu önizleme sitedeki görünümle birebir aynıdır. Tüm formatlar (örnek kutuları, alıntılar, notlar, kalın yazı vb.) doğru şekilde görüntülenir.
+            </p>
             <div className="space-y-4">
               {categories.map((category) => (
                 <div key={category.id} className="border border-border rounded-lg overflow-hidden">
@@ -646,14 +610,16 @@ const RulesEditorContent = () => {
                           </button>
 
                           {previewExpandedSubs.includes(subCategory.id) && (
-                            <div className="p-3 space-y-2">
-                              <p className="text-sm text-muted-foreground mb-3">{subCategory.description}</p>
+                            <div className="p-4 space-y-4">
+                              {subCategory.description && (
+                                <p className="text-sm text-muted-foreground">{subCategory.description}</p>
+                              )}
                               {subCategory.rules.map((rule) => (
-                                <div key={rule.id} className="p-3 bg-muted/30 rounded-lg">
-                                  <div className="flex items-start justify-between">
-                                    <div className="flex-1">
-                                      <span className="font-medium text-primary">{rule.id}</span>
-                                      <span className="font-medium ml-2">{rule.title}</span>
+                                <div key={rule.id} className="p-4 bg-muted/20 rounded-xl border border-border/50">
+                                  <div className="flex items-start justify-between mb-3">
+                                    <div className="flex items-center gap-2">
+                                      <span className="font-semibold text-primary">{rule.id}</span>
+                                      <span className="font-semibold text-foreground">{rule.title}</span>
                                     </div>
                                     {rule.lastUpdate && (
                                       <Badge variant="outline" className="text-xs shrink-0">
@@ -661,7 +627,7 @@ const RulesEditorContent = () => {
                                       </Badge>
                                     )}
                                   </div>
-                                  <p className="text-sm text-muted-foreground mt-1">{rule.description}</p>
+                                  <RuleContentRenderer content={rule.description} />
                                 </div>
                               ))}
                             </div>
