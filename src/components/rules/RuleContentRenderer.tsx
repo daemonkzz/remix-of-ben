@@ -1,12 +1,42 @@
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronDown, AlertTriangle, Info, Quote, Lightbulb } from "lucide-react";
+import { ChevronDown, AlertTriangle, Info, Quote, Lightbulb, CheckCircle, XCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface RuleContentRendererProps {
   content: string;
   searchQuery?: string;
 }
+
+type ExampleVariant = 'default' | 'correct' | 'forbidden';
+
+// Örnek kalıplarını kontrol eden regex listesi
+const examplePatterns: Array<{ regex: RegExp; variant: ExampleVariant; title: string }> = [
+  { regex: /^(Örnek|ÖRNEK)\s*:\s*(.*)$/i, variant: 'default', title: 'Örnek' },
+  { regex: /^(Örnekler|ÖRNEKLER)\s*:\s*(.*)$/i, variant: 'default', title: 'Örnekler' },
+  { regex: /^Doğru\s+Kullanım\s*:\s*(.*)$/i, variant: 'correct', title: 'Doğru Kullanım' },
+  { regex: /^Doğru\s+[Öö]rnek\s*:\s*(.*)$/i, variant: 'correct', title: 'Doğru Örnek' },
+  { regex: /^Doğru\s+[Öö]rnekler\s*:\s*(.*)$/i, variant: 'correct', title: 'Doğru Örnekler' },
+  { regex: /^Yasak\s+[Öö]rnekler?\s*:\s*(.*)$/i, variant: 'forbidden', title: 'Yasak Örnekler' },
+  { regex: /^Açık\s+[Öö]rnekler?\s*\(?[Yy]asak\)?\s*:\s*(.*)$/i, variant: 'forbidden', title: 'Açık Örnekler (Yasak)' },
+  { regex: /^[Yy]anlış\s+[Öö]rnek\s*:\s*(.*)$/i, variant: 'forbidden', title: 'Yanlış Örnek' },
+  { regex: /^[Yy]anlış\s+[Öö]rnekler\s*:\s*(.*)$/i, variant: 'forbidden', title: 'Yanlış Örnekler' },
+];
+
+// Madde işareti kontrolü
+const isBulletLine = (line: string): boolean => {
+  const trimmed = line.trim();
+  return trimmed.startsWith('·') || trimmed.startsWith('-') || trimmed.startsWith('•');
+};
+
+// Madde metnini çıkar
+const extractBulletText = (line: string): string => {
+  const trimmed = line.trim();
+  if (trimmed.startsWith('·') || trimmed.startsWith('-') || trimmed.startsWith('•')) {
+    return trimmed.slice(1).trim();
+  }
+  return trimmed;
+};
 
 // Parse and render rule content with special formatting
 export const RuleContentRenderer: React.FC<RuleContentRendererProps> = ({
@@ -32,6 +62,7 @@ export const RuleContentRenderer: React.FC<RuleContentRendererProps> = ({
   const elements: React.ReactNode[] = [];
   let currentListItems: string[] = [];
   let detailIndex = 0;
+  let lineIndex = 0;
 
   const flushList = () => {
     if (currentListItems.length > 0) {
@@ -51,20 +82,73 @@ export const RuleContentRenderer: React.FC<RuleContentRendererProps> = ({
     }
   };
 
-  lines.forEach((line, lineIndex) => {
+  while (lineIndex < lines.length) {
+    const line = lines[lineIndex];
     const trimmed = line.trim();
 
     // Empty line
     if (!trimmed) {
       flushList();
-      return;
+      lineIndex++;
+      continue;
     }
 
-    // Bullet point list (• or -)
-    if (trimmed.startsWith("•") || trimmed.startsWith("-")) {
-      const itemText = trimmed.slice(1).trim();
-      currentListItems.push(itemText);
-      return;
+    // Örnek kalıplarını kontrol et
+    let exampleMatch: { match: RegExpMatchArray; variant: ExampleVariant; title: string } | null = null;
+    
+    for (const pattern of examplePatterns) {
+      const match = trimmed.match(pattern.regex);
+      if (match) {
+        exampleMatch = { match, variant: pattern.variant, title: pattern.title };
+        break;
+      }
+    }
+
+    if (exampleMatch) {
+      flushList();
+      
+      // Başlıktan sonraki metni al
+      const textAfter = exampleMatch.match[exampleMatch.match.length - 1]?.trim() || '';
+      const exampleItems: string[] = [];
+      
+      // Sonraki satırlarda madde var mı kontrol et
+      let nextIndex = lineIndex + 1;
+      while (nextIndex < lines.length) {
+        const nextLine = lines[nextIndex];
+        const nextTrimmed = nextLine.trim();
+        
+        if (isBulletLine(nextTrimmed)) {
+          exampleItems.push(extractBulletText(nextTrimmed));
+          nextIndex++;
+        } else if (nextTrimmed === '') {
+          // Boş satırda dur
+          break;
+        } else {
+          // Farklı içerik, döngüden çık
+          break;
+        }
+      }
+      
+      elements.push(
+        <ExampleBlock
+          key={`example-${lineIndex}`}
+          title={exampleMatch.title}
+          text={textAfter || undefined}
+          items={exampleItems.length > 0 ? exampleItems : undefined}
+          variant={exampleMatch.variant}
+          searchQuery={searchQuery}
+        />
+      );
+      
+      lineIndex = nextIndex;
+      continue;
+    }
+
+    // Bullet point list (• or - or ·) - sadece örnek bloğu dışındakiler
+    if (isBulletLine(trimmed)) {
+      currentListItems.push(extractBulletText(trimmed));
+      lineIndex++;
+      continue;
     }
 
     // Quote format (''...'' or "...")
@@ -74,38 +158,25 @@ export const RuleContentRenderer: React.FC<RuleContentRendererProps> = ({
       elements.push(
         <QuoteBlock key={`quote-${lineIndex}`} text={quoteMatch[1]} searchQuery={searchQuery} />
       );
-      return;
+      lineIndex++;
+      continue;
     }
 
     // Note format (Not: ...)
-    if (trimmed.startsWith("Not:") || trimmed.startsWith("NOT:")) {
+    if (trimmed.startsWith("Not:") || trimmed.startsWith("NOT:") || 
+        trimmed.startsWith("Uyarı:") || trimmed.startsWith("UYARI:") ||
+        trimmed.startsWith("Dikkat:") || trimmed.startsWith("DİKKAT:")) {
       flushList();
-      const noteText = trimmed.slice(4).trim();
+      const colonIndex = trimmed.indexOf(':');
+      const noteText = trimmed.slice(colonIndex + 1).trim();
       elements.push(
         <NoteBlock key={`note-${lineIndex}`} text={noteText} searchQuery={searchQuery} />
       );
-      return;
+      lineIndex++;
+      continue;
     }
 
-    // Example format (Örnek: ... or Örnekler:)
-    if (trimmed.startsWith("Örnek:") || trimmed.startsWith("ÖRNEK:")) {
-      flushList();
-      const exampleText = trimmed.slice(6).trim();
-      elements.push(
-        <ExampleBlock key={`example-${lineIndex}`} text={exampleText} searchQuery={searchQuery} />
-      );
-      return;
-    }
-
-    if (trimmed.startsWith("Örnekler:") || trimmed.startsWith("ÖRNEKLER:")) {
-      flushList();
-      elements.push(
-        <ExampleHeader key={`examples-header-${lineIndex}`} />
-      );
-      return;
-    }
-
-    // Collapsible detail section (lines starting with [...] or content after examples)
+    // Collapsible detail section (lines starting with [...])
     if (trimmed.startsWith("[") && trimmed.includes("]")) {
       flushList();
       const currentDetailIndex = detailIndex++;
@@ -122,7 +193,8 @@ export const RuleContentRenderer: React.FC<RuleContentRendererProps> = ({
           searchQuery={searchQuery}
         />
       );
-      return;
+      lineIndex++;
+      continue;
     }
 
     // Regular paragraph
@@ -132,7 +204,8 @@ export const RuleContentRenderer: React.FC<RuleContentRendererProps> = ({
         {renderInlineFormatting(trimmed, searchQuery)}
       </p>
     );
-  });
+    lineIndex++;
+  }
 
   flushList();
 
@@ -190,30 +263,87 @@ const NoteBlock: React.FC<{ text: string; searchQuery?: string }> = ({ text, sea
   </motion.div>
 );
 
-// Example Block Component
-const ExampleBlock: React.FC<{ text: string; searchQuery?: string }> = ({ text, searchQuery }) => (
-  <motion.div
-    initial={{ opacity: 0, y: 5 }}
-    animate={{ opacity: 1, y: 0 }}
-    className="my-3 p-3 bg-secondary/50 border border-border/30 rounded-lg flex items-start gap-3"
-  >
-    <Lightbulb className="w-4 h-4 text-primary/60 mt-0.5 flex-shrink-0" />
-    <div>
-      <span className="text-primary/80 font-medium text-xs uppercase tracking-wider">Örnek</span>
-      <p className="text-foreground/70 text-sm mt-0.5 leading-relaxed">
-        {renderInlineFormatting(text, searchQuery)}
-      </p>
-    </div>
-  </motion.div>
-);
+// Gelişmiş Örnek Kutusu - 3 varyant destekler
+interface ExampleBlockProps {
+  title: string;
+  text?: string;
+  items?: string[];
+  variant?: ExampleVariant;
+  searchQuery?: string;
+}
 
-// Example Header Component
-const ExampleHeader: React.FC = () => (
-  <div className="flex items-center gap-2 my-3 text-primary/80">
-    <Lightbulb className="w-4 h-4" />
-    <span className="font-medium text-sm uppercase tracking-wider">Örnekler</span>
-  </div>
-);
+const ExampleBlock: React.FC<ExampleBlockProps> = ({ 
+  title, 
+  text, 
+  items, 
+  variant = 'default',
+  searchQuery 
+}) => {
+  const variantStyles = {
+    default: {
+      container: 'bg-secondary/50 border-border/30',
+      iconBg: 'bg-primary/10',
+      icon: 'text-primary/70',
+      title: 'text-primary/80',
+      bullet: 'bg-primary/50',
+      IconComponent: Lightbulb
+    },
+    correct: {
+      container: 'bg-emerald-500/10 border-emerald-500/25',
+      iconBg: 'bg-emerald-500/20',
+      icon: 'text-emerald-500',
+      title: 'text-emerald-600 dark:text-emerald-400',
+      bullet: 'bg-emerald-500',
+      IconComponent: CheckCircle
+    },
+    forbidden: {
+      container: 'bg-rose-500/10 border-rose-500/25',
+      iconBg: 'bg-rose-500/20',
+      icon: 'text-rose-500',
+      title: 'text-rose-600 dark:text-rose-400',
+      bullet: 'bg-rose-500',
+      IconComponent: XCircle
+    }
+  };
+
+  const styles = variantStyles[variant];
+  const Icon = styles.IconComponent;
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 5 }}
+      animate={{ opacity: 1, y: 0 }}
+      className={cn(
+        'my-4 p-4 border rounded-xl flex items-start gap-3',
+        styles.container
+      )}
+    >
+      <div className={cn('flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center', styles.iconBg)}>
+        <Icon className={cn('w-4 h-4', styles.icon)} />
+      </div>
+      <div className="flex-1 min-w-0">
+        <span className={cn('font-semibold text-xs uppercase tracking-wider', styles.title)}>
+          {title}
+        </span>
+        {text && (
+          <p className="text-foreground/75 text-sm mt-1.5 leading-relaxed">
+            {renderInlineFormatting(text, searchQuery)}
+          </p>
+        )}
+        {items && items.length > 0 && (
+          <ul className="mt-2.5 space-y-2">
+            {items.map((item, i) => (
+              <li key={i} className="flex items-start gap-2.5 text-sm text-foreground/75">
+                <span className={cn('w-1.5 h-1.5 rounded-full mt-1.5 flex-shrink-0', styles.bullet)} />
+                <span className="leading-relaxed">{renderInlineFormatting(item, searchQuery)}</span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+    </motion.div>
+  );
+};
 
 // Collapsible Detail Component
 const CollapsibleDetail: React.FC<{
