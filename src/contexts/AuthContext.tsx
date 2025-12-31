@@ -41,8 +41,22 @@ const cleanUrlHash = () => {
   }
 };
 
+// Sync Discord ID from identity data (for existing users who logged in before the fix)
+const syncDiscordId = async (userId: string): Promise<void> => {
+  try {
+    await supabase.rpc('sync_discord_id_from_identity', { p_user_id: userId });
+  } catch (error) {
+    console.error('Discord ID sync hatası:', error);
+  }
+};
+
 // Fetch user profile from database
-const fetchUserProfile = async (userId: string): Promise<UserProfile | null> => {
+const fetchUserProfile = async (userId: string, shouldSyncDiscord = false): Promise<UserProfile | null> => {
+  // If requested, sync Discord ID first (for existing users)
+  if (shouldSyncDiscord) {
+    await syncDiscordId(userId);
+  }
+
   const { data, error } = await supabase
     .from('profiles')
     .select('id, username, avatar_url, discord_id, is_banned, ban_reason')
@@ -87,8 +101,9 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
           // Clean URL hash after OAuth redirect
           cleanUrlHash();
           // Fetch profile data with setTimeout to avoid deadlock
+          // Also sync Discord ID for users who logged in before the fix
           setTimeout(async () => {
-            const userProfile = await fetchUserProfile(session.user.id);
+            const userProfile = await fetchUserProfile(session.user.id, true);
             if (userProfile?.is_banned) {
               console.log('Kullanıcı yasaklı, çıkış yapılıyor');
               await supabase.auth.signOut();
