@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -16,6 +16,7 @@ import {
   Eye,
   Download,
   HelpCircle,
+  MessageSquare,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -43,6 +44,7 @@ import { RuleEditorCard, RuleFormatGuide } from '@/components/admin/rules';
 import { RuleContentRenderer } from '@/components/rules/RuleContentRenderer';
 import type { MainCategory, SubCategory, Rule } from '@/types/rules';
 import { kazeRulesData } from '@/data/rulesData';
+import { useDiscordNotification } from '@/hooks/useDiscordNotification';
 
 // Default rules data to import
 const defaultRulesData: MainCategory[] = kazeRulesData;
@@ -52,6 +54,7 @@ const RulesEditorContent = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [activeTab, setActiveTab] = useState('editor');
+  const { sendRulesNotification, isSending: isDiscordSending } = useDiscordNotification();
   
   const [rulesId, setRulesId] = useState<string | null>(null);
   const [categories, setCategories] = useState<MainCategory[]>([]);
@@ -123,12 +126,52 @@ const RulesEditorContent = () => {
 
       toast.success('Kurallar başarıyla kaydedildi');
       setLastUpdated(new Date().toISOString());
+      // Update original categories after successful save
+      setOriginalCategories(JSON.parse(JSON.stringify(categories)));
     } catch (error) {
       console.error('Save error:', error);
       toast.error('Kurallar kaydedilirken hata oluştu');
     } finally {
       setIsSaving(false);
     }
+  };
+
+  // Find updated rules by comparing with original categories
+  const updatedRules = useMemo(() => {
+    const updated: Array<{ id: string; title: string; categoryTitle: string }> = [];
+    
+    categories.forEach(category => {
+      const originalCategory = originalCategories.find(c => c.id === category.id);
+      
+      category.subCategories.forEach(subCategory => {
+        const originalSubCategory = originalCategory?.subCategories.find(s => s.id === subCategory.id);
+        
+        subCategory.rules.forEach(rule => {
+          const originalRule = originalSubCategory?.rules.find(r => r.id === rule.id);
+          
+          // Check if rule is new or modified
+          if (!originalRule || 
+              originalRule.title !== rule.title || 
+              originalRule.description !== rule.description) {
+            updated.push({
+              id: rule.id,
+              title: rule.title,
+              categoryTitle: `${category.title} > ${subCategory.title}`,
+            });
+          }
+        });
+      });
+    });
+    
+    return updated;
+  }, [categories, originalCategories]);
+
+  const handleSendToDiscord = async () => {
+    if (updatedRules.length === 0) {
+      toast.error('Değişen kural bulunamadı. Önce değişiklik yapın ve kaydedin.');
+      return;
+    }
+    await sendRulesNotification(updatedRules);
   };
 
   const handleImportDefaults = () => {
@@ -336,6 +379,20 @@ const RulesEditorContent = () => {
               </Button>
             }
           />
+          <Button
+            variant="outline"
+            onClick={handleSendToDiscord}
+            disabled={isDiscordSending || updatedRules.length === 0}
+            className="gap-2 text-[#5865F2] border-[#5865F2]/30 hover:bg-[#5865F2]/10 hover:text-[#5865F2]"
+            title={updatedRules.length === 0 ? 'Değişen kural yok' : `${updatedRules.length} güncellenen kural`}
+          >
+            {isDiscordSending ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <MessageSquare className="w-4 h-4" />
+            )}
+            Discord'a Bildir {updatedRules.length > 0 && `(${updatedRules.length})`}
+          </Button>
           <Button
             variant="outline"
             onClick={() => setImportConfirm(true)}

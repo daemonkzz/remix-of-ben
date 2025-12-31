@@ -26,11 +26,13 @@ import {
   Send,
   Loader2,
   Image,
+  MessageSquare,
 } from 'lucide-react';
 import { RichTextEditor } from '@/components/admin/updates/RichTextEditor';
 import { UpdatePreview } from '@/components/admin/updates/UpdatePreview';
 import type { UpdateData, ContentBlock, UpdateCategory } from '@/types/update';
 import { defaultUpdateData } from '@/types/update';
+import { useDiscordNotification } from '@/hooks/useDiscordNotification';
 
 const UpdateEditor = () => {
   const navigate = useNavigate();
@@ -45,6 +47,7 @@ const UpdateEditor = () => {
   const [activeTab, setActiveTab] = useState('general');
 
   const [updateData, setUpdateData] = useState<UpdateData>({ ...defaultUpdateData });
+  const { sendUpdateNotification, isSending: isDiscordSending } = useDiscordNotification();
 
   // Check admin role
   useEffect(() => {
@@ -218,6 +221,21 @@ const UpdateEditor = () => {
           </div>
 
           <div className="flex items-center gap-2">
+            {updateData.is_published && isEditMode && (
+              <Button
+                variant="outline"
+                onClick={() => sendUpdateNotification(updateData)}
+                disabled={isDiscordSending}
+                className="gap-2 text-[#5865F2] border-[#5865F2]/30 hover:bg-[#5865F2]/10 hover:text-[#5865F2]"
+              >
+                {isDiscordSending ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <MessageSquare className="w-4 h-4" />
+                )}
+                Discord'a Gönder
+              </Button>
+            )}
             <Button
               variant="outline"
               onClick={() => handleSave(false)}
