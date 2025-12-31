@@ -1030,6 +1030,10 @@ export type Database = {
         Args: { p_success: boolean; p_user_id: string }
         Returns: Json
       }
+      sync_discord_id_from_identity: {
+        Args: { p_user_id: string }
+        Returns: boolean
+      }
       verify_form_access_code: {
         Args: { p_code: string; p_form_id: string }
         Returns: boolean
