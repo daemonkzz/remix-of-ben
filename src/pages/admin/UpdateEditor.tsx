@@ -103,12 +103,12 @@ const UpdateEditor = () => {
 
   // Load existing update if editing
   useEffect(() => {
-    if (isAuthorized && isEditMode && id && !isDraftPromptPending) {
+    if (isAuthorized && isEditMode && id) {
       loadUpdate(id);
-    } else if (isAuthorized && !isEditMode && !isDraftPromptPending) {
+    } else if (isAuthorized && !isEditMode) {
       setIsDataLoaded(true);
     }
-  }, [isAuthorized, isEditMode, id, isDraftPromptPending]);
+  }, [isAuthorized, isEditMode, id]);
 
   const loadUpdate = async (updateId: string) => {
     setIsLoading(true);

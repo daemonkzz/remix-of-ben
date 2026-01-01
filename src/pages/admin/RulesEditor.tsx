@@ -84,7 +84,7 @@ const RulesEditorContent = () => {
   const [previewExpandedCats, setPreviewExpandedCats] = useState<string[]>([]);
   const [previewExpandedSubs, setPreviewExpandedSubs] = useState<string[]>([]);
 
-  // Check for draft on mount
+  // Check for draft on mount and load rules
   useEffect(() => {
     const savedDraft = localStorage.getItem(DRAFT_KEY);
     if (savedDraft) {
@@ -96,14 +96,9 @@ const RulesEditorContent = () => {
         localStorage.removeItem(DRAFT_KEY);
       }
     }
+    // Always load rules regardless of draft status
+    loadRules();
   }, []);
-
-  // Load rules data
-  useEffect(() => {
-    if (!isDraftPromptPending) {
-      loadRules();
-    }
-  }, [isDraftPromptPending]);
 
   // Auto-save to localStorage
   useEffect(() => {
