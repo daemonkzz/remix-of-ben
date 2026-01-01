@@ -136,12 +136,12 @@ const FormBuilder = () => {
 
   // Load existing form template if editing
   useEffect(() => {
-    if (id && isAuthorized && !isDraftPromptPending) {
+    if (id && isAuthorized) {
       loadFormTemplate();
-    } else if (!id && isAuthorized && !isDraftPromptPending) {
+    } else if (!id && isAuthorized) {
       setIsDataLoaded(true);
     }
-  }, [id, isAuthorized, isDraftPromptPending]);
+  }, [id, isAuthorized]);
 
   const loadFormTemplate = async () => {
     if (!id) return;
